@@ -277,7 +277,7 @@ tr:last-child td{border-bottom:none}
         <div class="ci wa"><i class="fab fa-whatsapp"></i></div>
         <h3>WhatsApp</h3>
         <p>Contactez-nous directement pour une réponse rapide.</p>
-        <a class="clink" href="https://wa.me/2290199000000" target="_blank">+229 01 99 00 00 00</a><br><br>
+        <a class="clink" href="https://wa.me/2290140048928" target="_blank">+229 01 99 00 00 00</a><br><br>
         <a class="btn btn-sm" style="background:#25D366;color:#fff;border:none;cursor:pointer;border-radius:6px;padding:9px 18px;text-decoration:none;display:inline-flex;align-items:center;gap:7px" href="https://wa.me/2290199000000" target="_blank"><i class="fab fa-whatsapp"></i> Ouvrir WhatsApp</a>
       </div>
       <div class="contact-card">
@@ -1846,5 +1846,846 @@ window.addEventListener('load', function(){
   loadAnnounce();
 })();
 </script>
+  <!-- ========== COMPTEURS ANIMÉS ========== -->
+<script>
+(function(){
+  // Modifiez ces valeurs selon votre réalité
+  const STATS = [
+    { id:'landingTotalPaid',    target: 12500000, suffix:' FCFA', label:'Distribués' },
+    { id:'landingMemberCount',  target: 3842,     suffix:'',      label:'Membres actifs' },
+    { id:'landingSuccessRate',  target: 98,       suffix:'%',     label:'Satisfaction' },
+    { id:'landingWithdrawals',  target: 1247,     suffix:'',      label:'Retraits effectués' },
+  ];
+
+  function animateCounter(el, target, suffix, duration=2000){
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(()=>{
+      start += step;
+      if(start >= target){
+        start = target;
+        clearInterval(timer);
+      }
+      el.textContent = Math.floor(start).toLocaleString('fr-FR') + suffix;
+    }, 16);
+  }
+
+  function injectStatsSection(){
+    // Chercher la section hero existante
+    const hero = document.querySelector('.hero') || document.querySelector('#page-home');
+    if(!hero) return;
+
+    // Créer la bande de stats si elle n'existe pas
+    if(document.getElementById('animatedStatsBar')) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'animatedStatsBar';
+    bar.style.cssText = `
+      background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.05));
+      border-top: 1px solid rgba(201,168,76,0.25);
+      border-bottom: 1px solid rgba(201,168,76,0.25);
+      padding: 28px 20px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 40px;
+    `;
+
+    STATS.forEach(s => {
+      const item = document.createElement('div');
+      item.style.cssText = 'text-align:center;min-width:140px;';
+      item.innerHTML = `
+        <div id="${s.id}" style="font-size:2rem;font-weight:800;color:#C9A84C;font-family:'Playfair Display',serif;">0</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;">${s.label}</div>
+      `;
+      bar.appendChild(item);
+    });
+
+    // Insérer après le hero
+    hero.insertAdjacentElement('afterend', bar);
+  }
+
+  function startCounters(){
+    STATS.forEach(s => {
+      const el = document.getElementById(s.id);
+      if(el) animateCounter(el, s.target, s.suffix);
+    });
+  }
+
+  // Observer pour déclencher quand visible
+  function initObserver(){
+    const bar = document.getElementById('animatedStatsBar');
+    if(!bar) return;
+    const obs = new IntersectionObserver(entries => {
+      if(entries[0].isIntersecting){
+        startCounters();
+        obs.disconnect();
+      }
+    }, { threshold: 0.3 });
+    obs.observe(bar);
+  }
+
+  // Attendre que la page soit chargée
+  window.addEventListener('load', ()=>{
+    injectStatsSection();
+    setTimeout(initObserver, 300);
+  });
+
+  // Relancer si on revient sur la home
+  const origShowPage = window.showPage;
+  if(origShowPage){
+    window.showPage = function(page){
+      origShowPage(page);
+      if(page === 'home'){
+        setTimeout(()=>{
+          injectStatsSection();
+          startCounters();
+        }, 200);
+      }
+    };
+  }
+})();
+</script>
+<!-- ========== FIN COMPTEURS ========== -->
+  <!-- ========== BADGES ========== -->
+<style>
+#badgesSection { margin-top: 20px; }
+.badges-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  min-width: 80px;
+  text-align: center;
+  transition: transform 0.2s;
+  cursor: default;
+}
+.badge-item.unlocked {
+  background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.06));
+  border: 1px solid rgba(201,168,76,0.4);
+}
+.badge-item.locked {
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.12);
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+.badge-item:hover { transform: scale(1.08); }
+.badge-icon { font-size: 1.8rem; }
+.badge-name { font-size: 0.68rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.badge-item.unlocked .badge-name { color: #C9A84C; }
+</style>
+
+<script>
+// Définition de tous les badges
+const BADGES_DEF = [
+  { id:'first_deposit',   icon:'💳', name:'Premier dépôt',    check: u => (getTransactions().filter(t=>t.userId===u.id&&t.type==='deposit'&&t.status==='approved').length >= 1) },
+  { id:'first_withdraw',  icon:'💸', name:'Premier retrait',   check: u => (getTransactions().filter(t=>t.userId===u.id&&t.type==='withdrawal'&&t.status==='approved').length >= 1) },
+  { id:'five_referrals',  icon:'👥', name:'5 Filleuls',        check: u => ((u.referrals||[]).length >= 5) },
+  { id:'ten_referrals',   icon:'🌟', name:'10 Filleuls',       check: u => ((u.referrals||[]).length >= 10) },
+  { id:'withdrawn_10k',   icon:'🏅', name:'10K retirés',       check: u => ((u.totalWithdrawn||0) >= 10000) },
+  { id:'withdrawn_100k',  icon:'🥇', name:'100K retirés',      check: u => ((u.totalWithdrawn||0) >= 100000) },
+  { id:'withdrawn_500k',  icon:'💎', name:'500K retirés',      check: u => ((u.totalWithdrawn||0) >= 500000) },
+  { id:'plan_investor',   icon:'🌱', name:'Investisseur',      check: u => ((u.plans||[]).length >= 1) },
+  { id:'multi_plan',      icon:'🌳', name:'Multi-plans',       check: u => ((u.plans||[]).length >= 3) },
+  { id:'loyalty_30',      icon:'📅', name:'30 jours',          check: u => (u.createdAt && (Date.now()-u.createdAt) >= 30*24*3600*1000) },
+  { id:'loyalty_90',      icon:'🎖️', name:'90 jours',          check: u => (u.createdAt && (Date.now()-u.createdAt) >= 90*24*3600*1000) },
+  { id:'vip',             icon:'👑', name:'VIP',               check: u => ((u.totalWithdrawn||0) >= 1000000) },
+];
+
+function getUserBadges(u){
+  return BADGES_DEF.map(b => ({ ...b, unlocked: b.check(u) }));
+}
+
+function renderBadges(u){
+  const container = document.getElementById('badgesSection');
+  if(!container) return;
+  const badges = getUserBadges(u);
+  const unlocked = badges.filter(b=>b.unlocked).length;
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-weight:700;color:#C9A84C;font-size:0.95rem;">🏅 Mes Badges</div>
+      <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);">${unlocked}/${badges.length} débloqués</div>
+    </div>
+    <div class="badges-grid">
+      ${badges.map(b=>`
+        <div class="badge-item ${b.unlocked?'unlocked':'locked'}" title="${b.unlocked?'Débloqué ✅':'Non débloqué encore'}">
+          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-name">${b.name}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// Injecter la section badges dans le dashboard
+function injectBadgesSection(){
+  if(document.getElementById('badgesSection')) return;
+  const overviewTab = document.getElementById('tab-overview') || document.querySelector('.tab-section');
+  if(!overviewTab) return;
+  const section = document.createElement('div');
+  section.id = 'badgesSection';
+  section.className = 'panel';
+  section.style.marginTop = '18px';
+  overviewTab.appendChild(section);
+}
+
+// Hook dans loadDashboard
+const _origLoadDash = window.loadDashboard;
+window.loadDashboard = function(){
+  if(_origLoadDash) _origLoadDash();
+  setTimeout(()=>{
+    injectBadgesSection();
+    const cu = getCurrentUser();
+    if(!cu) return;
+    const users = getUsers();
+    const u = users.find(x=>x.id===cu.id)||cu;
+    renderBadges(u);
+  }, 150);
+};
+</script>
+<!-- ========== FIN BADGES ========== -->
+  <!-- ========== NIVEAUX ========== -->
+<style>
+#levelSection {
+  margin-top: 18px;
+}
+.level-bar-wrap {
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  height: 10px;
+  overflow: hidden;
+  margin: 8px 0 6px;
+}
+.level-bar-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+}
+.level-badge-big {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+</style>
+
+<script>
+const LEVELS = [
+  { name:'Bronze',   icon:'🥉', min:0,       max:49999,    color:'#CD7F32', bg:'rgba(205,127,50,0.15)' },
+  { name:'Argent',   icon:'🥈', min:50000,   max:199999,   color:'#C0C0C0', bg:'rgba(192,192,192,0.15)' },
+  { name:'Or',       icon:'🥇', min:200000,  max:499999,   color:'#C9A84C', bg:'rgba(201,168,76,0.18)' },
+  { name:'Platine',  icon:'💠', min:500000,  max:999999,   color:'#4fc3f7', bg:'rgba(79,195,247,0.15)' },
+  { name:'Diamant',  icon:'💎', min:1000000, max:Infinity, color:'#b388ff', bg:'rgba(179,136,255,0.18)' },
+];
+
+function getUserLevel(totalWithdrawn){
+  return LEVELS.find(l => totalWithdrawn >= l.min && totalWithdrawn <= l.max) || LEVELS[0];
+}
+
+function renderLevel(u){
+  const container = document.getElementById('levelSection');
+  if(!container) return;
+  const total = (u.totalWithdrawn||0) + (u.balance||0);
+  const lvl = getUserLevel(total);
+  const nextLvl = LEVELS[LEVELS.indexOf(lvl)+1];
+  const progress = nextLvl
+    ? Math.min(100, Math.round(((total - lvl.min) / (lvl.max - lvl.min)) * 100))
+    : 100;
+
+  container.innerHTML = `
+    <div class="panel">
+      <div style="font-weight:700;color:#C9A84C;font-size:0.95rem;margin-bottom:12px;">🏆 Mon Niveau</div>
+      <div class="level-badge-big" style="background:${lvl.bg};color:${lvl.color};border:1px solid ${lvl.color}40;">
+        ${lvl.icon} ${lvl.name}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:4px;">
+        <span>${lvl.icon} ${lvl.name}</span>
+        <span>${nextLvl ? nextLvl.icon+' '+nextLvl.name : '🎯 Niveau MAX'}</span>
+      </div>
+      <div class="level-bar-wrap">
+        <div class="level-bar-fill" id="levelBarFill" style="width:0%;background:linear-gradient(90deg,${lvl.color},${lvl.color}aa);"></div>
+      </div>
+      <div style="font-size:0.76rem;color:rgba(255,255,255,0.45);text-align:right;">${progress}%${nextLvl?' — encore '+fmtMoney(nextLvl.min - total)+' FCFA pour '+nextLvl.name:' — Niveau maximum atteint 🎉'}</div>
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+        ${LEVELS.map(l=>`
+          <div style="
+            flex:1;min-width:60px;text-align:center;padding:7px 4px;border-radius:10px;
+            background:${total>=l.min?l.bg:'rgba(255,255,255,0.03)'};
+            border:1px solid ${total>=l.min?l.color+'50':'rgba(255,255,255,0.08)'};
+            opacity:${total>=l.min?1:0.4};font-size:0.75rem;
+          ">
+            <div style="font-size:1.2rem;">${l.icon}</div>
+            <div style="color:${total>=l.min?l.color:'rgba(255,255,255,0.4)'};font-weight:600;">${l.name}</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.65rem;">${fmtMoney(l.min)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  // Animer la barre
+  setTimeout(()=>{
+    const fill = document.getElementById('levelBarFill');
+    if(fill) fill.style.width = progress+'%';
+  }, 100);
+}
+
+function injectLevelSection(){
+  if(document.getElementById('levelSection')) return;
+  const overviewTab = document.getElementById('tab-overview') || document.querySelector('.tab-section');
+  if(!overviewTab) return;
+  const section = document.createElement('div');
+  section.id = 'levelSection';
+  overviewTab.appendChild(section);
+}
+
+const _origLoadDash2 = window.loadDashboard;
+window.loadDashboard = function(){
+  if(_origLoadDash2) _origLoadDash2();
+  setTimeout(()=>{
+    injectLevelSection();
+    const cu = getCurrentUser();
+    if(!cu) return;
+    const u = getUsers().find(x=>x.id===cu.id)||cu;
+    renderLevel(u);
+  }, 200);
+};
+</script>
+<!-- ========== FIN NIVEAUX ========== -->
+  <!-- ========== GRAPHIQUE GAINS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+#gainChartSection {
+  margin-top: 18px;
+}
+#gainChartSection .panel {
+  padding: 18px;
+}
+#gainChartCanvas {
+  max-height: 220px;
+}
+</style>
+
+<script>
+let gainChartInstance = null;
+
+function buildGainChartData(userId){
+  const txs = getTransactions().filter(t =>
+    t.userId === userId &&
+    t.status === 'approved' &&
+    (t.type === 'deposit' || t.type === 'bonus' || t.type === 'affiliate')
+  );
+
+  // Grouper par semaine (7 dernières semaines)
+  const weeks = [];
+  const labels = [];
+  const now = Date.now();
+
+  for(let i = 6; i >= 0; i--){
+    const weekStart = now - (i+1)*7*24*3600*1000;
+    const weekEnd   = now - i*7*24*3600*1000;
+    const total = txs
+      .filter(t => t.date >= weekStart && t.date < weekEnd)
+      .reduce((sum, t) => sum + (t.amount||0), 0);
+    weeks.push(total);
+    const d = new Date(weekEnd);
+    labels.push(d.getDate()+'/'+(d.getMonth()+1));
+  }
+  return { labels, data: weeks };
+}
+
+function renderGainChart(u){
+  const container = document.getElementById('gainChartSection');
+  if(!container) return;
+
+  const { labels, data } = buildGainChartData(u.id);
+  const hasData = data.some(v => v > 0);
+
+  container.innerHTML = `
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-weight:700;color:#C9A84C;font-size:0.95rem;">📈 Évolution de mes gains</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">7 dernières semaines</div>
+      </div>
+      ${!hasData
+        ? `<div style="text-align:center;padding:30px 0;color:rgba(255,255,255,0.3);font-size:0.85rem;">
+             📊 Pas encore de données.<br>Effectuez votre premier dépôt !
+           </div>`
+        : `<canvas id="gainChartCanvas"></canvas>`
+      }
+    </div>
+  `;
+
+  if(!hasData) return;
+
+  const ctx = document.getElementById('gainChartCanvas').getContext('2d');
+  if(gainChartInstance) gainChartInstance.destroy();
+
+  gainChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Gains (FCFA)',
+        data,
+        borderColor: '#C9A84C',
+        backgroundColor: 'rgba(201,168,76,0.12)',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#C9A84C',
+        pointBorderColor: '#1a1a2e',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(26,26,46,0.95)',
+          borderColor: 'rgba(201,168,76,0.4)',
+          borderWidth: 1,
+          titleColor: '#C9A84C',
+          bodyColor: '#fff',
+          callbacks: {
+            label: ctx => ' ' + fmtMoney(ctx.parsed.y) + ' FCFA'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: 'rgba(255,255,255,0.45)', font:{ size:11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: 'rgba(255,255,255,0.45)',
+            font:{ size:11 },
+            callback: v => fmtMoney(v)
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+function injectGainChartSection(){
+  if(document.getElementById('gainChartSection')) return;
+  const statsTab = document.getElementById('tab-stats') || document.getElementById('tab-overview') || document.querySelector('.tab-section');
+  if(!statsTab) return;
+  const section = document.createElement('div');
+  section.id = 'gainChartSection';
+  statsTab.appendChild(section);
+}
+
+const _origLoadDash3 = window.loadDashboard;
+window.loadDashboard = function(){
+  if(_origLoadDash3) _origLoadDash3();
+  setTimeout(()=>{
+    injectGainChartSection();
+    const cu = getCurrentUser();
+    if(!cu) return;
+    const u = getUsers().find(x=>x.id===cu.id)||cu;
+    renderGainChart(u);
+  }, 250);
+};
+</script>
+<!-- ========== FIN GRAPHIQUE ========== -->
+  <!-- ========== JOHN CHAT ========== -->
+<!-- Coller juste avant </body> -->
+
+<!-- Puter.js -->
+<script src="https://js.puter.com/v2/"></script>
+
+<style>
+  /* ── Bouton flottant ── */
+  #johnChatToggle {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c9a84c, #f0d080);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  #johnChatToggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(201,168,76,0.7);
+  }
+
+  /* ── Fenêtre chat ── */
+  #johnChatWindow {
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    width: 360px;
+    max-height: 520px;
+    background: #1a1a2e;
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    z-index: 9998;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  #johnChatWindow.open { display: flex; }
+
+  /* ── Header ── */
+  #johnChatHeader {
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  #johnChatHeader .john-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #johnChatHeader .john-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+  #johnChatHeader .john-name {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1rem;
+  }
+  #johnChatHeader .john-status {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  #johnChatHeader .john-status::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: #2ecc71;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  #johnChatClose {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  #johnChatClose:hover { background: rgba(255,255,255,0.35); }
+
+  /* ── Messages ── */
+  #johnChatMessages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  #johnChatMessages::-webkit-scrollbar { width: 4px; }
+  #johnChatMessages::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 4px; }
+
+  .john-msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    animation: johnMsgIn 0.2s ease;
+  }
+  @keyframes johnMsgIn {
+    from { opacity:0; transform: translateY(6px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .john-msg.bot {
+    background: rgba(255,255,255,0.07);
+    color: #e8e8e8;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+  }
+  .john-msg.user {
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+  }
+  .john-typing {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.07);
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    padding: 10px 16px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .john-typing span {
+    width: 7px;
+    height: 7px;
+    background: #c9a84c;
+    border-radius: 50%;
+    animation: johnDot 1.2s infinite;
+  }
+  .john-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .john-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes johnDot {
+    0%,60%,100% { transform: translateY(0); opacity:0.4; }
+    30%          { transform: translateY(-5px); opacity:1; }
+  }
+
+  /* ── Input ── */
+  #johnChatInputArea {
+    padding: 12px 14px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    background: #1a1a2e;
+  }
+  #johnChatInput {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    color: #fff;
+    padding: 9px 13px;
+    font-size: 0.87rem;
+    resize: none;
+    outline: none;
+    max-height: 100px;
+    line-height: 1.4;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  #johnChatInput::placeholder { color: rgba(255,255,255,0.35); }
+  #johnChatInput:focus { border-color: rgba(201,168,76,0.6); }
+  #johnChatSend {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #c9a84c, #a07830);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    transition: opacity 0.2s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  #johnChatSend:hover { opacity: 0.85; transform: scale(1.05); }
+  #johnChatSend:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Mobile */
+  @media(max-width: 420px){
+    #johnChatWindow { width: calc(100vw - 24px); right: 12px; bottom: 90px; }
+    #johnChatToggle { right: 16px; bottom: 20px; }
+  }
+</style>
+
+<!-- Bouton flottant -->
+<button id="johnChatToggle" title="John CHAT">🤖</button>
+
+<!-- Fenêtre chat -->
+<div id="johnChatWindow">
+  <div id="johnChatHeader">
+    <div class="john-info">
+      <div class="john-avatar">🤖</div>
+      <div>
+        <div class="john-name">John CHAT</div>
+        <div class="john-status">En ligne</div>
+      </div>
+    </div>
+    <button id="johnChatClose">✕</button>
+  </div>
+  <div id="johnChatMessages"></div>
+  <div id="johnChatInputArea">
+    <textarea id="johnChatInput" placeholder="Posez votre question..." rows="1"></textarea>
+    <button id="johnChatSend">➤</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const toggle   = document.getElementById('johnChatToggle');
+  const window_  = document.getElementById('johnChatWindow');
+  const closeBtn = document.getElementById('johnChatClose');
+  const messages = document.getElementById('johnChatMessages');
+  const input    = document.getElementById('johnChatInput');
+  const sendBtn  = document.getElementById('johnChatSend');
+
+  let isOpen    = false;
+  let isWaiting = false;
+  let history   = []; // historique de conversation
+
+  // ── Ouvrir / Fermer ──
+  toggle.addEventListener('click', () => {
+    isOpen = !isOpen;
+    window_.classList.toggle('open', isOpen);
+    toggle.textContent = isOpen ? '✕' : '🤖';
+    if(isOpen && messages.children.length === 0) addBotMessage(
+      "Bonjour ! 👋 Je suis John, votre assistant. Comment puis-je vous aider ?"
+    );
+  });
+  closeBtn.addEventListener('click', () => {
+    isOpen = false;
+    window_.classList.remove('open');
+    toggle.textContent = '🤖';
+  });
+
+  // ── Ajouter message bot ──
+  function addBotMessage(text){
+    const div = document.createElement('div');
+    div.className = 'john-msg bot';
+    div.textContent = text;
+    messages.appendChild(div);
+    scrollBottom();
+  }
+
+  // ── Ajouter message utilisateur ──
+  function addUserMessage(text){
+    const div = document.createElement('div');
+    div.className = 'john-msg user';
+    div.textContent = text;
+    messages.appendChild(div);
+    scrollBottom();
+  }
+
+  // ── Indicateur "en train d'écrire" ──
+  function showTyping(){
+    const div = document.createElement('div');
+    div.className = 'john-typing';
+    div.id = 'johnTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    messages.appendChild(div);
+    scrollBottom();
+    return div;
+  }
+  function hideTyping(){
+    const el = document.getElementById('johnTyping');
+    if(el) el.remove();
+  }
+
+  // ── Scroll bas ──
+  function scrollBottom(){
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // ── Envoyer message ──
+  async function sendMessage(){
+    const text = input.value.trim();
+    if(!text || isWaiting) return;
+
+    addUserMessage(text);
+    history.push({ role: 'user', content: text });
+    input.value = '';
+    autoResize();
+    isWaiting = true;
+    sendBtn.disabled = true;
+
+    const typing = showTyping();
+
+    try {
+      // Appel à puter.ai avec historique complet
+      const response = await puter.ai.chat(
+        history,
+        {
+          model: 'claude-sonnet-4-5',
+          system: `Tu es John, un assistant IA intelligent, sympathique et professionnel pour ce site. 
+Tu réponds toujours en français sauf si l'utilisateur écrit dans une autre langue.
+Tu es utile, concis et bienveillant. Évite les réponses trop longues.`
+        }
+      );
+
+      hideTyping();
+
+      const reply = response?.message?.content?.[0]?.text
+                 || response?.content?.[0]?.text
+                 || response?.text
+                 || response
+                 || "Je n'ai pas pu répondre. Réessayez.";
+
+      history.push({ role: 'assistant', content: reply });
+      addBotMessage(reply);
+
+    } catch(err) {
+      hideTyping();
+      console.error('[John CHAT]', err);
+      addBotMessage("❌ Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
+      history.pop(); // retirer le dernier message user si erreur
+    }
+
+    isWaiting = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+
+  // ── Événements ──
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // ── Auto-resize textarea ──
+  function autoResize(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+  }
+  input.addEventListener('input', autoResize);
+
+})();
+</script>
+<!-- ========== FIN JOHN CHAT ========== -->
 </body>
 </html>
