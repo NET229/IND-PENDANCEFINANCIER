@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INDÉPENDANCE FINANCIÈRE — Investissement Mondial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://leekpay.fr/js/leekpay.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyB9PtJhSpN3einaMMnMT33L45A9GchEPqs",
+    authDomain: "finance-ce1ed.firebaseapp.com",
+    projectId: "finance-ce1ed",
+    storageBucket: "finance-ce1ed.firebasestorage.app",
+    messagingSenderId: "335940819603",
+    appId: "1:335940819603:web:ea5dae79356ddad0660b66"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db = db;
+  window._fsHelpers = { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy };
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --gold:#C9A84C;--gold-light:#E8C97A;--gold-dark:#9A7A2E;
+  --dark:#0A0A0F;--dark2:#12121A;--dark3:#1C1C28;--dark4:#252535;
+  --accent:#4A90D9;--accent2:#2ECC71;--danger:#E74C3C;
+  --text:#E8E8F0;--text-muted:#8888A8;
+  --border:rgba(201,168,76,0.2);--glass:rgba(255,255,255,0.04);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+.page{display:none;min-height:100vh}.page.active{display:block}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+#moneyCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;opacity:0.85}
+#announceBanner{display:none;position:relative;z-index:200;background:linear-gradient(90deg,#9A7A2E,#C9A84C,#E8C97A,#C9A84C,#9A7A2E);background-size:200%;animation:shimmerBg 3s linear infinite;color:#000;font-weight:600;font-size:0.85rem;padding:10px 20px;text-align:center}
+#announceBanner.show{display:block}
+.announce-close{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:#000}
+@keyframes shimmerBg{0%{background-position:0%}100%{background-position:200%}}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5%;position:fixed;top:0;width:100%;z-index:100;background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--gold);letter-spacing:0.05em;line-height:1.1;cursor:pointer}
+.logo span{display:block;font-size:0.55rem;letter-spacing:0.25em;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-weight:400;text-transform:uppercase}
+.nav-btns{display:flex;gap:10px;align-items:center}
+.btn{padding:10px 22px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;border-radius:6px;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold-dark)}
+.btn-outline:hover{background:rgba(201,168,76,0.1)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0A0A0F;font-weight:600}
+.btn-gold:hover{background:linear-gradient(135deg,var(--gold-light),var(--gold));transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,0.35)}
+.btn-green{background:linear-gradient(135deg,#2ECC71,#27AE60);color:#fff;font-weight:600}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(46,204,113,0.3)}
+.btn-danger{background:linear-gradient(135deg,#E74C3C,#C0392B);color:#fff;font-weight:600}
+.btn-sm{padding:7px 16px;font-size:0.8rem}.btn-lg{padding:14px 32px;font-size:1rem}.btn-block{width:100%;justify-content:center}
+#landing{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(201,168,76,0.15) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 90% 80%,rgba(74,144,217,0.08) 0%,transparent 60%),var(--dark)}
+.hero{padding:200px 5% 100px;text-align:center;position:relative;z-index:5}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.1);border:1px solid var(--border);padding:6px 16px;border-radius:50px;font-size:0.8rem;color:var(--gold);margin-bottom:28px}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.4rem,6vw,5rem);font-weight:900;line-height:1.08;margin-bottom:20px}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p{font-size:1.05rem;color:var(--text-muted);max-width:540px;margin:0 auto 40px;line-height:1.7}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.stats-row{display:flex;justify-content:center;gap:50px;flex-wrap:wrap;margin-top:70px;padding:40px 0;border-top:1px solid var(--border)}
+.stat{text-align:center}
+.stat-value{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--gold);font-weight:700}
+.stat-label{font-size:0.78rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px}
+.section{padding:80px 5%;position:relative;z-index:5}
+.section-title{font-family:'Playfair Display',serif;font-size:2.1rem;font-weight:700;text-align:center;margin-bottom:10px}
+.section-title em{font-style:normal;color:var(--gold)}
+.section-sub{text-align:center;color:var(--text-muted);margin-bottom:48px;font-size:0.95rem}
+.gold-bar{height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto 16px;width:80px}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;max-width:1200px;margin:0 auto}
+.plan-card{background:var(--dark3);border:1px solid var(--border);border-radius:16px;padding:26px 20px;position:relative;overflow:hidden;transition:transform 0.3s,box-shadow 0.3s}
+.plan-card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.plan-card.featured{border-color:var(--gold);background:linear-gradient(160deg,rgba(201,168,76,0.08),var(--dark3))}
+.plan-card.featured::after{content:'POPULAIRE';position:absolute;top:14px;right:-22px;background:var(--gold);color:#000;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;padding:4px 32px;transform:rotate(30deg)}
+.plan-name{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.plan-price{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--gold);font-weight:700}
+.plan-price span{font-size:0.82rem;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-weight:400}
+.plan-gain{margin:14px 0;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:0.88rem;color:var(--accent2)}
+.plan-gain strong{font-size:1.25rem}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;max-width:1100px;margin:0 auto}
+.feature-card{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:26px;backdrop-filter:blur(10px)}
+.feature-icon{width:46px;height:46px;border-radius:12px;background:rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--gold);margin-bottom:14px}
+.feature-card h3{font-size:1rem;margin-bottom:7px}
+.feature-card p{font-size:0.855rem;color:var(--text-muted);line-height:1.65}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:700px;margin:0 auto}
+.contact-card{background:var(--dark3);border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center;transition:transform 0.2s}
+.contact-card:hover{transform:translateY(-4px)}
+.contact-card .ci{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 14px}
+.contact-card .ci.wa{background:rgba(37,211,102,0.15);color:#25D366}
+.contact-card .ci.ml{background:rgba(201,168,76,0.15);color:var(--gold)}
+.contact-card h3{font-size:1.05rem;margin-bottom:6px}
+.contact-card p{color:var(--text-muted);font-size:0.85rem;margin-bottom:14px}
+.contact-card a.clink{color:var(--gold);font-size:0.9rem;font-weight:600;text-decoration:none}
+.contact-card a.clink:hover{text-decoration:underline}
+footer{border-top:1px solid var(--border);padding:36px 5%;text-align:center;color:var(--text-muted);font-size:0.82rem;position:relative;z-index:5}
+  </style>
+  <style>
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:36px;width:100%;max-width:440px;position:relative;max-height:90vh;overflow-y:auto;animation:slideUp 0.28s ease}
+@keyframes slideUp{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;padding:4px}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:700;margin-bottom:5px}
+.modal-sub{color:var(--text-muted);font-size:0.85rem;margin-bottom:26px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:5px;letter-spacing:0.05em;text-transform:uppercase}
+.form-input{width:100%;padding:11px 15px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.93rem;transition:border-color 0.2s;outline:none}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:var(--text-muted)}
+select.form-input{cursor:pointer}
+option{background:var(--dark3)}
+.form-link{color:var(--gold);cursor:pointer;text-decoration:none;font-size:0.875rem}
+.form-link:hover{text-decoration:underline}
+.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+.alert{padding:11px 14px;border-radius:8px;font-size:0.858rem;margin-bottom:14px;display:none}
+.alert.show{display:block}
+.alert-success{background:rgba(46,204,113,0.14);border:1px solid rgba(46,204,113,0.3);color:#2ECC71}
+.alert-error{background:rgba(231,76,60,0.14);border:1px solid rgba(231,76,60,0.3);color:#E74C3C}
+.alert-info{background:rgba(74,144,217,0.14);border:1px solid rgba(74,144,217,0.3);color:var(--accent)}
+#dashboard{display:none}#dashboard.active{display:flex}
+.sidebar{width:258px;min-height:100vh;background:var(--dark2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;transition:transform 0.3s}
+.sidebar-logo{padding:22px 18px;border-bottom:1px solid var(--border)}
+.sidebar-user{padding:18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-size:1rem;flex-shrink:0}
+.user-info-name{font-weight:600;font-size:0.88rem}
+.user-info-plan{font-size:0.73rem;color:var(--gold)}
+.sidebar-nav{flex:1;padding:14px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 18px;cursor:pointer;color:var(--text-muted);font-size:0.875rem;border-left:3px solid transparent;transition:all 0.2s}
+.nav-item:hover{color:var(--text);background:var(--glass)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.08)}
+.nav-item i{width:17px;text-align:center}
+.sidebar-footer{padding:14px 18px;border-top:1px solid var(--border)}
+.main-content{margin-left:258px;flex:1;min-height:100vh;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(201,168,76,0.06) 0%,transparent 60%),var(--dark)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);position:sticky;top:0;z-index:40}
+.topbar-title{font-family:'Playfair Display',serif;font-size:1.25rem}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.page-content{padding:26px}
+.kyc-banner{background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.06));border:1px solid rgba(201,168,76,0.4);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:13px;margin-bottom:24px}
+.kyc-banner i{color:var(--gold);font-size:1.3rem}
+.kyc-banner-text{flex:1}
+.kyc-banner-text strong{display:block;margin-bottom:2px}
+.kyc-banner-text p{font-size:0.83rem;color:var(--text-muted)}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;margin-bottom:24px}
+.dash-card{background:var(--dark3);border:1px solid var(--border);border-radius:13px;padding:20px;position:relative;overflow:hidden}
+.dash-card::before{content:'';position:absolute;top:-28px;right:-28px;width:90px;height:90px;border-radius:50%;background:rgba(201,168,76,0.05)}
+.dash-card-label{font-size:0.76rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:9px}
+.dash-card-value{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);font-weight:700}
+.dash-card-sub{font-size:0.78rem;color:var(--text-muted);margin-top:3px}
+.dash-card.green .dash-card-value{color:var(--accent2)}.dash-card.blue .dash-card-value{color:var(--accent)}
+.panel{background:var(--dark3);border:1px solid var(--border);border-radius:13px;padding:22px;margin-bottom:22px}
+.panel-title{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.panel-title i{color:var(--gold)}
+.tab-section{display:none}.tab-section.active{display:block}
+.plans-dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.plan-dash-card{background:var(--dark4);border:1px solid var(--border);border-radius:11px;padding:20px;transition:all 0.2s}
+.plan-dash-card:hover{border-color:var(--gold-dark);transform:translateY(-3px)}
+.plan-dash-name{font-size:0.77rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px}
+.plan-dash-price{font-size:1.55rem;color:var(--gold);font-family:'Playfair Display',serif;font-weight:700}
+.plan-dash-gain{font-size:0.88rem;color:var(--accent2);margin:9px 0}
+.plan-owned{display:inline-block;padding:3px 10px;border-radius:50px;font-size:0.7rem;background:rgba(46,204,113,0.15);color:var(--accent2);border:1px solid rgba(46,204,113,0.3);margin-bottom:10px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:0.855rem}
+th{padding:9px 13px;text-align:left;color:var(--text-muted);font-weight:500;font-size:0.76rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border)}
+td{padding:13px;border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;font-size:0.73rem;font-weight:500}
+.badge-success{background:rgba(46,204,113,0.15);color:var(--accent2)}
+.badge-pending{background:rgba(201,168,76,0.15);color:var(--gold)}
+.badge-danger{background:rgba(231,76,60,0.15);color:#E74C3C}
+.menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:49}
+.sidebar-overlay.open{display:block}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.timer-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(74,144,217,0.12);border:1px solid rgba(74,144,217,0.3);padding:5px 11px;border-radius:50px;font-size:0.78rem;color:var(--accent)}
+.ref-box{background:var(--dark4);border:1px dashed var(--gold-dark);border-radius:9px;padding:12px 14px;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.ref-code{font-family:monospace;font-size:1rem;color:var(--gold);flex:1;word-break:break-all}
+.kyc-steps{display:flex;gap:0;margin-bottom:26px}
+.kyc-step{flex:1;text-align:center;position:relative}
+.kyc-step::after{content:'';position:absolute;top:15px;left:50%;width:100%;height:2px;background:var(--border);z-index:0}
+.kyc-step:last-child::after{display:none}
+.kyc-step-num{width:30px;height:30px;border-radius:50%;background:var(--dark4);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:600;margin:0 auto 5px;position:relative;z-index:1}
+.kyc-step.done .kyc-step-num{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.kyc-step.active .kyc-step-num{background:var(--gold);border-color:var(--gold);color:#000}
+.kyc-step-label{font-size:0.7rem;color:var(--text-muted)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#E74C3C;display:inline-block;margin-left:4px;animation:pulse 1.5s infinite}
+#admin{display:none}#admin.active{display:flex}
+.admin-sidebar{width:240px;min-height:100vh;background:linear-gradient(180deg,var(--dark2),#0d0d18);border-right:1px solid rgba(231,76,60,0.2);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:50;transition:transform 0.3s}
+.admin-header-bar{padding:20px 18px;background:rgba(231,76,60,0.08);border-bottom:1px solid rgba(231,76,60,0.2)}
+.admin-logo{font-family:'Playfair Display',serif;font-size:1.05rem;color:#E74C3C}
+.admin-logo span{display:block;font-size:0.68rem;font-family:'DM Sans',sans-serif;color:var(--text-muted)}
+.network-btn{background:var(--dark4);border:2px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all 0.2s}
+.network-btn:hover{border-color:var(--gold-dark);transform:translateY(-2px)}
+.network-btn.selected{border-color:var(--gold);background:rgba(201,168,76,0.12);box-shadow:0 0 0 1px var(--gold)}
+.ussd-pulse{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 16px;animation:ussdPulse 1.5s ease-in-out infinite}
+@keyframes ussdPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(201,168,76,0.4)}50%{transform:scale(1.05);box-shadow:0 0 0 16px rgba(201,168,76,0)}}
+.hero h1,.hero p,.hero-btns,.hero-badge{animation:fadeUp 0.7s ease both}
+.hero h1{animation-delay:0.1s}.hero p{animation-delay:0.2s}.hero-btns{animation-delay:0.3s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0}.menu-toggle{display:block}
+  .hero{padding:130px 5% 60px}.stats-row{gap:22px}
+  .plans-grid{grid-template-columns:1fr 1fr}.modal{padding:22px}
+  .page-content{padding:16px}.cards-grid{grid-template-columns:1fr 1fr}
+  .admin-sidebar{transform:translateX(-100%)}.admin-sidebar.open{transform:translateX(0)}
+  #admin .main-content{margin-left:0}
+}
+@media(max-width:480px){
+  .plans-grid{grid-template-columns:1fr}.cards-grid{grid-template-columns:1fr}
+  .nav-btns .btn:first-child{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="moneyCanvas"></canvas>
+<div id="announceBanner">
+  <span id="announceText"></span>
+  <button class="announce-close" onclick="document.getElementById('announceBanner').classList.remove('show')">✕</button>
+</div>
+<div id="landing" class="page active">
+  <nav class="nav">
+    <div class="logo" onclick="showPage('landing')">INDÉPENDANCE<span>FINANCIÈRE</span></div>
+    <div class="nav-btns">
+      <button class="btn btn-outline" onclick="openModal('loginModal')">Connexion</button>
+      <button class="btn btn-gold" onclick="openModal('registerModal')">Commencer <i class="fa fa-arrow-right"></i></button>
+    </div>
+  </nav>
+  <section class="hero">
+    <div class="hero-badge">🌍 Plateforme d'investissement international</div>
+    <h1>Faites fructifier<br>votre argent avec<br><em>confiance</em></h1>
+    <p>Investissez dès 3 100 FCFA et générez des revenus quotidiens garantis. Plus de 12 000 investisseurs nous font confiance à travers le monde.</p>
+    <div class="hero-btns">
+      <button class="btn btn-gold btn-lg" onclick="openModal('registerModal')">Créer mon compte gratuit</button>
+      <button class="btn btn-outline btn-lg" onclick="document.getElementById('plans-section').scrollIntoView({behavior:'smooth'})">Voir les plans</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-value">12K+</div><div class="stat-label">Investisseurs</div></div>
+      <div class="stat"><div class="stat-value">98M+</div><div class="stat-label">FCFA versés</div></div>
+      <div class="stat"><div class="stat-value" id="landingPlanCount">5</div><div class="stat-label">Niveaux de plans</div></div>
+      <div class="stat"><div class="stat-value">24/7</div><div class="stat-label">Support actif</div></div>
+    </div>
+  </section>
+  <section class="section" id="plans-section">
+    <div class="gold-bar"></div>
+    <h2 class="section-title">Nos <em>Plans d'Investissement</em></h2>
+    <p class="section-sub">Choisissez le plan adapté à vos objectifs financiers</p>
+    <div class="plans-grid" id="landingPlansGrid"></div>
+  </section>
+  <section class="section" style="background:var(--dark2)">
+    <div class="gold-bar"></div>
+    <h2 class="section-title">Pourquoi nous <em>choisir</em> ?</h2>
+    <p class="section-sub">Une plateforme sécurisée, transparente et profitable</p>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-shield-alt"></i></div><h3>Sécurité maximale</h3><p>Vérification KYC, chiffrement SSL et authentification pour protéger vos fonds.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-bolt"></i></div><h3>Gains quotidiens</h3><p>Vos bonus sont crédités chaque jour automatiquement. Retirez quand vous voulez.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-users"></i></div><h3>Programme d'affiliation</h3><p>Parrainez vos proches et gagnez des bonus pour chaque nouvel investisseur.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-globe"></i></div><h3>Paiements internationaux</h3><p>Dépôts et retraits via Mobile Money, supportant les paiements depuis tous les pays.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-headset"></i></div><h3>Support 24/7</h3><p>Notre équipe est disponible à toute heure pour répondre à vos questions.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fa fa-chart-line"></i></div><h3>Tableau de bord avancé</h3><p>Suivez vos investissements, transactions et gains en temps réel.</p></div>
+    </div>
+  </section>
+  <section class="section" id="contact-section">
+    <div class="gold-bar"></div>
+    <h2 class="section-title">Nous <em>contacter</em></h2>
+    <p class="section-sub">Notre service client est disponible 24h/24 — 7j/7</p>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="ci wa"><i class="fab fa-whatsapp"></i></div>
+        <h3>WhatsApp</h3>
+        <p>Contactez-nous directement pour une réponse rapide.</p>
+        <a class="clink" href="https://wa.me/2290199000000" target="_blank">+229 01 99 00 00 00</a><br><br>
+        <a class="btn btn-sm" style="background:#25D366;color:#fff;border:none;cursor:pointer;border-radius:6px;padding:9px 18px;text-decoration:none;display:inline-flex;align-items:center;gap:7px" href="https://wa.me/2290199000000" target="_blank"><i class="fab fa-whatsapp"></i> Ouvrir WhatsApp</a>
+      </div>
+      <div class="contact-card">
+        <div class="ci ml"><i class="fa fa-envelope"></i></div>
+        <h3>Email</h3>
+        <p>Envoyez-nous un email pour toute demande ou réclamation.</p>
+        <a class="clink" href="mailto:adminindependancefinancier@gmail.com">adminindependancefinancier@gmail.com</a><br><br>
+        <a class="btn btn-sm btn-gold" href="mailto:adminindependancefinancier@gmail.com" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px"><i class="fa fa-envelope"></i> Envoyer un email</a>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <div class="logo" style="justify-content:center;display:flex;margin-bottom:12px">INDÉPENDANCE FINANCIÈRE</div>
+    <p style="margin-bottom:6px">© 2025 Indépendance Financière. Tous droits réservés.</p>
+    <p style="font-size:0.76rem">Investir comporte des risques. Lisez nos conditions avant d'investir.</p>
+    <div style="margin-top:14px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="#plans-section" class="form-link" style="font-size:0.8rem">Plans</a>
+      <a href="#contact-section" class="form-link" style="font-size:0.8rem">Contact</a>
+      <a class="form-link" style="font-size:0.8rem;cursor:pointer" onclick="openModal('loginModal')">Connexion</a>
+    </div>
+  </footer>
+</div>
+<div id="dashboard" class="page">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo">INDÉPENDANCE<span>FINANCIÈRE</span></div></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebarAvatar">U</div>
+      <div><div class="user-info-name" id="sidebarName">Utilisateur</div><div class="user-info-plan" id="sidebarPlan">— Aucun plan —</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchTab('overview')"><i class="fa fa-th-large"></i> Tableau de bord</div>
+      <div class="nav-item" onclick="switchTab('plans')"><i class="fa fa-seedling"></i> Mes Parcelles</div>
+      <div class="nav-item" onclick="switchTab('deposit')"><i class="fa fa-wallet"></i> Dépôt</div>
+      <div class="nav-item" onclick="switchTab('withdraw')"><i class="fa fa-money-bill-wave"></i> Retrait</div>
+      <div class="nav-item" onclick="switchTab('transactions')"><i class="fa fa-history"></i> Transactions</div>
+      <div class="nav-item" onclick="switchTab('affiliate')"><i class="fa fa-share-alt"></i> Parrainage</div>
+      <div class="nav-item" onclick="switchTab('kyc')"><i class="fa fa-id-card"></i> Vérification KYC</div>
+      <div class="nav-item" onclick="switchTab('contact')"><i class="fa fa-headset"></i> Contact</div>
+      <div class="nav-item" onclick="switchTab('profile')"><i class="fa fa-user-circle"></i> Mon Profil</div>
+    </nav>
+    <div class="sidebar-footer"><button class="btn btn-outline btn-sm btn-block" onclick="logout()"><i class="fa fa-sign-out-alt"></i> Déconnexion</button></div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main-content" id="mainContent">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:13px">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+        <div class="topbar-title" id="topbarTitle">Tableau de bord</div>
+      </div>
+      <div class="topbar-right">
+        <span class="timer-badge"><i class="fa fa-clock"></i>&nbsp;<span id="timerCount">00:00:00</span></span>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="kyc-banner" id="kycBanner" style="display:none">
+        <i class="fa fa-exclamation-triangle"></i>
+        <div class="kyc-banner-text"><strong>Vérification KYC requise</strong><p>Complétez votre vérification d'identité pour accéder à toutes les fonctionnalités.</p></div>
+        <button class="btn btn-gold btn-sm" onclick="switchTab('kyc')">Vérifier maintenant</button>
+      </div>
+      <div class="tab-section active" id="tab-overview">
+        <div class="cards-grid">
+          <div class="dash-card"><div class="dash-card-label">Solde disponible</div><div class="dash-card-value" id="balanceDisplay">0</div><div class="dash-card-sub">FCFA</div></div>
+          <div class="dash-card green"><div class="dash-card-label">Bonus quotidien</div><div class="dash-card-value" id="dailyBonusDisplay">0</div><div class="dash-card-sub">FCFA / jour</div></div>
+          <div class="dash-card blue"><div class="dash-card-label">Total retiré</div><div class="dash-card-value" id="totalWithdrawnDisplay">0</div><div class="dash-card-sub">FCFA</div></div>
+          <div class="dash-card"><div class="dash-card-label">Parrainages</div><div class="dash-card-value" id="referralCount">0</div><div class="dash-card-sub">Personnes</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><i class="fa fa-bolt"></i> Bonus du jour</div>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">Bonus quotidien calculé automatiquement selon vos parcelles actives.</p>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:3px">Bonus accumulé aujourd'hui</div>
+              <div style="font-size:1.9rem;color:var(--accent2);font-family:'Playfair Display',serif;font-weight:700" id="accumulatedBonus">0 FCFA</div>
+            </div>
+            <button class="btn btn-green" onclick="switchTab('withdraw')"><i class="fa fa-paper-plane"></i> Demander un retrait</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><i class="fa fa-history"></i> Dernières transactions</div>
+          <div id="recentTransactionsTable"><p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:20px">Aucune transaction.</p></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-plans">
+        <div class="panel">
+          <div class="panel-title"><i class="fa fa-seedling"></i> Acheter une parcelle</div>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:18px">L'achat est immédiat si votre solde est suffisant. Le prix est déduit automatiquement.</p>
+          <div class="plans-dash-grid" id="plansGrid"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><i class="fa fa-check-circle"></i> Mes parcelles actives</div>
+          <div id="myPlansGrid"><p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:20px">Vous n'avez pas encore de parcelles.</p></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-deposit">
+        <div class="panel" style="max-width:520px">
+          <div class="panel-title"><i class="fa fa-wallet"></i> Faire un dépôt</div>
+          <div id="depositAlert" class="alert"></div>
+          <div style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05));border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:13px">
+            <div style="font-size:2rem">⚡</div>
+            <div>
+              <div style="font-weight:600;color:var(--gold);margin-bottom:2px">Paiement sécurisé via LeekPay</div>
+              <div style="font-size:0.82rem;color:var(--text-muted)">MTN MoMo · Moov Money · Orange Money · Wave · Celtiis et plus</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Montant à déposer (FCFA)</label>
+            <input type="number" class="form-input" id="depositAmount" placeholder="Minimum 500 FCFA" min="500" oninput="updateLeekPayBtn()">
+          </div>
+          <div style="background:rgba(46,204,113,0.07);border:1px solid rgba(46,204,113,0.25);border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:0.82rem">
+            <i class="fa fa-bolt" style="color:var(--accent2);margin-right:6px"></i>Votre solde est crédité <strong style="color:var(--text)">automatiquement</strong> dès confirmation du paiement LeekPay.
+          </div>
+          <!-- Vrai bouton LeekPay widget — reconnu par leekpay.js au chargement -->
+          <button
+            id="leekpayBtn"
+            data-leekpay-amount="500"
+            data-leekpay-currency="XOF"
+            data-leekpay-key="pk_live_5MosLN0wFPDxYtlbWcS98dFXbuPim0Lk"
+            data-leekpay-description="Dépôt Indépendance Financière"
+            class="btn btn-gold btn-block"
+            style="display:none">
+            <i class="fa fa-credit-card"></i> Payer avec LeekPay
+          </button>
+          <!-- Bouton visible qui valide le montant puis déclenche le vrai bouton LeekPay -->
+          <button class="btn btn-gold btn-block" id="depositVisibleBtn" onclick="submitDeposit()">
+            <i class="fa fa-credit-card"></i> Payer avec LeekPay
+          </button>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-withdraw">
+        <div class="panel" style="max-width:520px">
+          <div class="panel-title"><i class="fa fa-money-bill-wave"></i> Demande de retrait</div>
+          <div id="withdrawAlert" class="alert"></div>
+          <div style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05));border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:3px">Solde disponible</div><div style="font-size:1.75rem;color:var(--gold);font-family:'Playfair Display',serif;font-weight:700" id="withdrawBalance">0 FCFA</div></div>
+            <i class="fa fa-wallet" style="font-size:2rem;color:rgba(201,168,76,0.3)"></i>
+          </div>
+          <div class="form-group"><label class="form-label">Montant à retirer (FCFA)</label><input type="number" class="form-input" id="withdrawAmount" placeholder="Minimum 1 000 FCFA" min="1000"></div>
+          <div class="form-group">
+            <label class="form-label">Réseau Mobile Money</label>
+            <select class="form-input" id="withdrawNetwork" onchange="updateWithdrawPlaceholder()">
+              <option value="">-- Choisir votre réseau --</option>
+              <option value="MTN MoMo">📱 MTN MoMo</option>
+              <option value="Moov Money">📱 Moov Money</option>
+              <option value="Celtiis Cash">📱 Celtiis Cash</option>
+              <option value="Orange Money">📱 Orange Money</option>
+              <option value="Wave">📱 Wave</option>
+              <option value="Autre">🌍 Autre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro de réception (avec indicatif pays)</label>
+            <input type="tel" class="form-input" id="withdrawAccount" placeholder="Ex: +229 01 XX XX XX">
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">Format obligatoire : +indicatif puis numéro</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom du titulaire du compte</label>
+            <input type="text" class="form-input" id="withdrawAccountName" placeholder="Nom complet tel qu'enregistré sur Mobile Money">
+          </div>
+          <div style="background:rgba(201,168,76,0.06);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:18px;font-size:0.82rem">
+            <div style="color:var(--gold);font-weight:600;margin-bottom:4px">⚡ Paiement automatique via LeekPay</div>
+            <div style="color:var(--text-muted)">Dès que l'administrateur approuve votre demande, LeekPay envoie automatiquement le paiement sur votre compte Mobile Money. Un email de confirmation vous sera envoyé.</div>
+          </div>
+          <button class="btn btn-gold btn-block" onclick="submitWithdrawal()"><i class="fa fa-paper-plane"></i> Soumettre la demande de retrait</button>
+        </div>
+                                     </div>
+                                     <div class="tab-section" id="tab-transactions">
+        <div class="panel">
+          <div class="panel-title"><i class="fa fa-history"></i> Historique des transactions</div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th><th>Détails</th></tr></thead>
+            <tbody id="transactionsTbody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:28px">Aucune transaction.</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-affiliate">
+        <div class="cards-grid" style="margin-bottom:22px">
+          <div class="dash-card green"><div class="dash-card-label">Filleuls actifs</div><div class="dash-card-value" id="affiliateCount">0</div></div>
+          <div class="dash-card"><div class="dash-card-label">Bonus affiliation</div><div class="dash-card-value" id="affiliateBonus">0</div><div class="dash-card-sub">FCFA gagnés</div></div>
+        </div>
+        <div class="panel" style="max-width:540px">
+          <div class="panel-title"><i class="fa fa-share-alt"></i> Votre lien de parrainage</div>
+          <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:14px">Partagez ce lien et gagnez <strong style="color:var(--gold)">500 FCFA</strong> pour chaque ami qui s'inscrit et effectue un dépôt.</p>
+          <div class="ref-box"><i class="fa fa-link" style="color:var(--gold)"></i><span class="ref-code" id="refLink">Chargement...</span><button class="btn btn-sm btn-outline" onclick="copyRefLink()"><i class="fa fa-copy"></i></button></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-sm" style="background:#25D366;color:#fff;border:none;cursor:pointer;border-radius:6px;padding:8px 16px;text-decoration:none" onclick="shareWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <button class="btn btn-sm btn-outline" onclick="copyRefLink()"><i class="fa fa-copy"></i> Copier</button>
+          </div>
+          <hr class="divider">
+          <div class="panel-title" style="font-size:0.98rem;padding-bottom:9px;margin-top:2px"><i class="fa fa-users"></i> Mes filleuls</div>
+          <div id="referralsList" style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:12px">Aucun filleul pour l'instant.</div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-kyc">
+        <div class="panel" style="max-width:540px">
+          <div class="panel-title"><i class="fa fa-id-card"></i> Vérification KYC</div>
+          <div class="kyc-steps">
+            <div class="kyc-step done" id="kycStep1"><div class="kyc-step-num">✓</div><div class="kyc-step-label">Inscription</div></div>
+            <div class="kyc-step" id="kycStep2"><div class="kyc-step-num">2</div><div class="kyc-step-label">Email</div></div>
+            <div class="kyc-step" id="kycStep3"><div class="kyc-step-num">3</div><div class="kyc-step-label">Identité</div></div>
+            <div class="kyc-step" id="kycStep4"><div class="kyc-step-num">4</div><div class="kyc-step-label">Validé</div></div>
+          </div>
+          <div id="kycContent"></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-contact">
+        <div class="panel" style="max-width:600px">
+          <div class="panel-title"><i class="fa fa-headset"></i> Service Client</div>
+          <p style="color:var(--text-muted);margin-bottom:22px;font-size:0.9rem">Notre équipe est disponible 24h/24 et 7j/7 pour vous aider.</p>
+          <div class="contact-grid">
+            <div class="contact-card">
+              <div class="ci wa"><i class="fab fa-whatsapp"></i></div>
+              <h3>WhatsApp</h3>
+              <p>Réponse rapide en moins de 5 minutes.</p>
+              <a class="clink" href="https://wa.me/2290199000000" target="_blank">+229 01 99 00 00 00</a><br><br>
+              <a class="btn btn-sm" style="background:#25D366;color:#fff;border:none;cursor:pointer;border-radius:6px;padding:9px 18px;text-decoration:none;display:inline-flex;align-items:center;gap:7px" href="https://wa.me/2290199000000" target="_blank"><i class="fab fa-whatsapp"></i> Contacter</a>
+            </div>
+            <div class="contact-card">
+              <div class="ci ml"><i class="fa fa-envelope"></i></div>
+              <h3>Email</h3>
+              <p>Envoyez-nous votre demande par email.</p>
+              <a class="clink" href="mailto:adminindependancefinancier@gmail.com">adminindependancefinancier@gmail.com</a><br><br>
+              <a class="btn btn-sm btn-gold" href="mailto:adminindependancefinancier@gmail.com" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px"><i class="fa fa-envelope"></i> Envoyer</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-profile">
+        <div class="panel" style="max-width:510px">
+          <div class="panel-title"><i class="fa fa-user-circle"></i> Mon Profil</div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+            <div class="user-avatar" style="width:60px;height:60px;font-size:1.5rem" id="profileAvatar">U</div>
+            <div>
+              <div style="font-size:1.05rem;font-weight:600" id="profileName">-</div>
+              <div style="font-size:0.83rem;color:var(--text-muted)" id="profileEmail">-</div>
+              <div style="font-size:0.78rem;color:var(--gold);margin-top:3px" id="profilePlan">-</div>
+            </div>
+          </div>
+          <div id="profileAlert" class="alert"></div>
+          <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" id="profileFirstname"></div>
+          <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="profileLastname"></div>
+          <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="profilePhone"></div>
+          <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" id="profileCountry" placeholder="Ex: Bénin"></div>
+          <button class="btn btn-gold btn-block" onclick="saveProfile()"><i class="fa fa-save"></i> Sauvegarder</button>
+          <hr class="divider">
+          <div class="panel-title" style="font-size:0.98rem;padding-bottom:9px"><i class="fa fa-lock"></i> Changer le mot de passe</div>
+          <div class="form-group"><label class="form-label">Ancien mot de passe</label><input type="password" class="form-input" id="oldPassword" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-input" id="newPassword" placeholder="••••••••"></div>
+          <button class="btn btn-outline btn-block" onclick="changePassword()"><i class="fa fa-key"></i> Mettre à jour</button>
+        </div>
+      </div>
+    </div>
+  </div>
+                                                                         </div>
+                                                                         <div id="admin" class="page">
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="admin-header-bar"><div class="admin-logo">ADMINISTRATION<span>Indépendance Financière</span></div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="switchAdminTab('adminOverview',this)"><i class="fa fa-chart-bar"></i> Vue d'ensemble</div>
+      <div class="nav-item" onclick="switchAdminTab('adminUsers',this)"><i class="fa fa-users"></i> Utilisateurs</div>
+      <div class="nav-item" onclick="switchAdminTab('adminWithdrawals',this)"><i class="fa fa-money-bill-wave"></i> Retraits <span class="notif-dot" id="withdrawNotif" style="display:none"></span></div>
+      <div class="nav-item" onclick="switchAdminTab('adminDeposits',this)"><i class="fa fa-wallet"></i> Dépôts</div>
+      <div class="nav-item" onclick="switchAdminTab('adminKyc',this)"><i class="fa fa-id-card"></i> KYC</div>
+      <div class="nav-item" onclick="switchAdminTab('adminPlans',this)"><i class="fa fa-seedling"></i> Gérer les plans</div>
+      <div class="nav-item" onclick="switchAdminTab('adminAnnounce',this)"><i class="fa fa-bullhorn"></i> Annonces</div>
+    </nav>
+    <div class="sidebar-footer"><button class="btn btn-danger btn-sm btn-block" onclick="logout()"><i class="fa fa-sign-out-alt"></i> Déconnexion</button></div>
+  </div>
+  <div class="main-content" style="margin-left:240px">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:11px">
+        <button class="menu-toggle" onclick="toggleAdminSidebar()"><i class="fa fa-bars"></i></button>
+        <div class="topbar-title">Panneau Administrateur</div>
+      </div>
+      <span style="font-size:0.8rem;color:var(--text-muted)" id="adminTopbarEmail">adminindependancefinancier@gmail.com</span>
+    </div>
+    <div class="page-content">
+      <div class="tab-section active" id="tab-adminOverview">
+        <div class="cards-grid">
+          <div class="dash-card"><div class="dash-card-label">Total utilisateurs</div><div class="dash-card-value" id="adminUserCount">0</div></div>
+          <div class="dash-card green"><div class="dash-card-label">Dépôts totaux</div><div class="dash-card-value" id="adminDepTotal">0</div><div class="dash-card-sub">FCFA</div></div>
+          <div class="dash-card blue"><div class="dash-card-label">Retraits approuvés</div><div class="dash-card-value" id="adminWithTotal">0</div><div class="dash-card-sub">FCFA</div></div>
+          <div class="dash-card"><div class="dash-card-label">Retraits en attente</div><div class="dash-card-value" style="color:#E74C3C" id="adminPendingCount">0</div></div>
+        </div>
+        <div class="panel"><div class="panel-title"><i class="fa fa-users"></i> Utilisateurs récents</div>
+          <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Solde</th><th>Plans</th><th>KYC</th></tr></thead><tbody id="adminRecentUsers"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminUsers">
+        <div class="panel"><div class="panel-title"><i class="fa fa-users"></i> Tous les utilisateurs</div>
+          <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Solde</th><th>Bonus/j</th><th>Plans</th><th>KYC</th><th>Actions</th></tr></thead><tbody id="adminAllUsers"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminWithdrawals">
+        <div class="panel" style="max-width:540px;margin-bottom:22px">
+          <div class="panel-title"><i class="fa fa-user-shield"></i> Mon retrait administrateur</div>
+          <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.3);border-radius:9px;padding:12px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--accent)">
+            <i class="fa fa-info-circle"></i> Les retraits des administrateurs nécessitent l'approbation d'un <strong>autre administrateur</strong>. Le paiement est ensuite envoyé automatiquement via LeekPay.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group"><label class="form-label">Montant (FCFA)</label><input type="number" class="form-input" id="adminWithdrawAmount" placeholder="Minimum 1 000" min="1000"></div>
+            <div class="form-group"><label class="form-label">Réseau</label>
+              <select class="form-input" id="adminWithdrawNetwork">
+                <option value="">-- Réseau --</option>
+                <option value="MTN MoMo">📱 MTN MoMo</option>
+                <option value="Moov Money">📱 Moov Money</option>
+                <option value="Celtiis Cash">📱 Celtiis Cash</option>
+                <option value="Orange Money">📱 Orange Money</option>
+                <option value="Wave">📱 Wave</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Numéro (avec indicatif)</label><input type="tel" class="form-input" id="adminWithdrawPhone" placeholder="+229 01 XX XX XX"></div>
+          <div class="form-group"><label class="form-label">Nom du titulaire</label><input type="text" class="form-input" id="adminWithdrawName" placeholder="Nom complet"></div>
+          <button class="btn btn-gold btn-block" onclick="submitAdminWithdrawal()"><i class="fa fa-paper-plane"></i> Soumettre ma demande de retrait</button>
+        </div>
+        <div class="panel"><div class="panel-title"><i class="fa fa-money-bill-wave"></i> Demandes de retrait</div>
+          <div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Montant</th><th>Réseau / Numéro / Titulaire</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="adminWithdrawalsTbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminDeposits">
+        <div class="panel"><div class="panel-title"><i class="fa fa-wallet"></i> Historique des dépôts</div>
+          <div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Montant</th><th>Méthode</th><th>Référence</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="adminDepositsTbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminKyc">
+        <div class="panel"><div class="panel-title"><i class="fa fa-id-card"></i> Dossiers KYC en attente</div>
+          <div class="table-wrap"><table><thead><tr><th>Utilisateur</th><th>Document</th><th>Soumis le</th><th>Actions</th></tr></thead><tbody id="adminKycTbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminPlans">
+        <div class="panel" style="max-width:620px">
+          <div class="panel-title"><i class="fa fa-plus-circle"></i> Ajouter / Modifier une parcelle</div>
+          <div id="planFormAlert" class="alert"></div>
+          <div class="form-group"><label class="form-label">Modifier une parcelle existante (ou laisser vide pour créer)</label>
+            <select class="form-input" id="editPlanSelect" onchange="loadPlanForEdit()"><option value="">— Nouvelle parcelle —</option></select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="form-group"><label class="form-label">Nom de la parcelle</label><input type="text" class="form-input" id="planFormName" placeholder="Ex: Parcelle Or"></div>
+            <div class="form-group"><label class="form-label">Prix (FCFA)</label><input type="number" class="form-input" id="planFormPrice" placeholder="Ex: 15000" min="0"></div>
+            <div class="form-group"><label class="form-label">Bonus quotidien (FCFA)</label><input type="number" class="form-input" id="planFormDaily" placeholder="Ex: 2500" min="0"></div>
+            <div class="form-group"><label class="form-label">Icône (emoji)</label><input type="text" class="form-input" id="planFormIcon" placeholder="Ex: 🌟"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Description courte</label><input type="text" class="form-input" id="planFormDesc" placeholder="Ex: Idéal pour les grands investisseurs"></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-gold" onclick="savePlanForm()" style="flex:1"><i class="fa fa-save"></i> Enregistrer</button>
+            <button class="btn btn-outline" onclick="resetPlanForm()"><i class="fa fa-plus"></i> Nouveau</button>
+            <button class="btn btn-danger btn-sm" id="deletePlanBtn" onclick="deletePlanFromForm()" style="display:none"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="panel"><div class="panel-title"><i class="fa fa-list"></i> Parcelles actuelles</div>
+          <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Prix</th><th>Bonus/j</th><th>Description</th><th>Actions</th></tr></thead><tbody id="adminPlansTbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="tab-section" id="tab-adminAnnounce">
+        <div class="panel" style="max-width:600px">
+          <div class="panel-title"><i class="fa fa-bullhorn"></i> Gérer les annonces</div>
+          <div id="announceFormAlert" class="alert"></div>
+          <div class="form-group"><label class="form-label">Texte de l'annonce</label><input type="text" class="form-input" id="announceInput" placeholder="Ex: 🎉 Bonus spécial ce week-end !"></div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="btn btn-gold" onclick="publishAnnounce()"><i class="fa fa-bullhorn"></i> Publier</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAnnounce()"><i class="fa fa-trash"></i> Supprimer</button>
+          </div>
+          <div style="margin-top:20px;padding:14px;background:var(--dark4);border-radius:8px;font-size:0.85rem">
+            <div style="color:var(--text-muted);margin-bottom:6px">Annonce actuelle :</div>
+            <div id="currentAnnouncePreview" style="color:var(--gold)">Aucune annonce active</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')"><i class="fa fa-times"></i></button>
+    <div class="modal-title">Connexion</div>
+    <div class="modal-sub">Accédez à votre espace investisseur</div>
+    <div id="loginAlert" class="alert"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="loginEmail" placeholder="votre@email.com"></div>
+    <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleLogin()"></div>
+    <button class="btn btn-gold btn-block" onclick="handleLogin()" style="margin-bottom:13px"><i class="fa fa-sign-in-alt"></i> Se connecter</button>
+    <div style="text-align:center;font-size:0.858rem;color:var(--text-muted)">Pas encore inscrit ? <a class="form-link" onclick="closeModal('loginModal');openModal('registerModal')">Créer un compte</a></div>
+  </div>
+</div>
+<div class="modal-overlay" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('registerModal')"><i class="fa fa-times"></i></button>
+    <div class="modal-title">Créer un compte</div>
+    <div class="modal-sub">Rejoignez 12 000+ investisseurs actifs</div>
+    <div id="registerAlert" class="alert"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">Prénom</label><input type="text" class="form-input" id="regFirstname" placeholder="Jean"></div>
+      <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="regLastname" placeholder="Dupont"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="regEmail" placeholder="votre@email.com"></div>
+    <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="regPhone" placeholder="+229 01 XX XX XX"></div>
+    <div class="form-group"><label class="form-label">Pays de résidence</label><input type="text" class="form-input" id="regCountry" placeholder="Ex: Bénin, France, Côte d'Ivoire..."></div>
+    <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="regPassword" placeholder="Min. 6 caractères"></div>
+    <div class="form-group"><label class="form-label">Code de parrainage (optionnel)</label><input type="text" class="form-input" id="regReferral" placeholder="Ex: IF-ABCD1234"></div>
+    <button class="btn btn-gold btn-block" onclick="handleRegister()" style="margin-bottom:13px"><i class="fa fa-user-plus"></i> S'inscrire gratuitement</button>
+    <div style="text-align:center;font-size:0.858rem;color:var(--text-muted)">Déjà inscrit ? <a class="form-link" onclick="closeModal('registerModal');openModal('loginModal')">Se connecter</a></div>
+  </div>
+</div>
+<div class="modal-overlay" id="emailVerifyModal">
+  <div class="modal">
+    <div class="modal-title">Vérification email</div>
+    <div class="modal-sub">Un code à 6 chiffres a été envoyé à votre adresse email.</div>
+    <div id="emailVerifyAlert" class="alert"></div>
+    <div class="form-group"><label class="form-label">Code de vérification</label><input type="text" class="form-input" id="emailVerifyCode" placeholder="123456" maxlength="6" style="text-align:center;letter-spacing:0.3em;font-size:1.4rem"></div>
+    <button class="btn btn-gold btn-block" onclick="verifyEmail()" style="margin-bottom:11px">Vérifier</button>
+    <div style="text-align:center;font-size:0.84rem;color:var(--text-muted)"><a class="form-link" onclick="resendCode()">Renvoyer le code</a></div>
+  </div>
+</div>
+<div class="modal-overlay" id="buyPlanModal">
+  <div class="modal" style="max-width:370px">
+    <button class="modal-close" onclick="closeModal('buyPlanModal')"><i class="fa fa-times"></i></button>
+    <div class="modal-title">Confirmer l'achat</div>
+    <div id="buyPlanContent"></div>
+    <div id="buyPlanAlert" class="alert"></div>
+    <div style="display:flex;gap:11px;margin-top:6px">
+      <button class="btn btn-outline" onclick="closeModal('buyPlanModal')" style="flex:1">Annuler</button>
+      <button class="btn btn-gold" onclick="confirmBuyPlan()" style="flex:1">Confirmer</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="ussdModal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div class="ussd-pulse">📱</div>
+    <div class="modal-title" style="text-align:center;font-size:1.4rem" id="ussdTitle">Paiement Mobile Money</div>
+    <div style="color:var(--text-muted);font-size:0.875rem;margin:8px 0 20px" id="ussdSubtitle">Appuyez sur le bouton pour lancer le paiement</div>
+    <div style="background:var(--dark4);border-radius:10px;padding:14px;margin-bottom:18px">
+      <div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:4px">Montant</div>
+      <div style="font-size:1.8rem;color:var(--gold);font-family:'Playfair Display',serif;font-weight:700" id="ussdAmount">0 FCFA</div>
+    </div>
+    <div id="ussdBeninBtn">
+      <a id="ussdLink" href="#" class="btn btn-gold btn-block" style="margin-bottom:12px;font-size:1rem;padding:14px" onclick="launchUSSD(event)">
+        <i class="fa fa-mobile-alt"></i> Appuyer pour payer maintenant
+      </a>
+      <p style="font-size:0.78rem;color:var(--text-muted)">✅ Votre dialer s'ouvrira avec le code de paiement pré-rempli.<br>Confirmez avec votre PIN Mobile Money.</p>
+    </div>
+    <div id="ussdIntlInfo" style="display:none">
+      <div style="background:rgba(201,168,76,0.08);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;text-align:left">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px">Envoyez le montant à :</div>
+        <div style="font-size:1rem;font-weight:600;color:var(--gold)">+229 01 97 00 00 00</div>
+        <div style="font-size:0.85rem;color:var(--text-muted)">Titulaire : <strong style="color:var(--text)">KOKOU Jos</strong></div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">Via MTN MoMo International</div>
+      </div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+    <div style="text-align:left">
+      <label class="form-label">Référence reçue par SMS</label>
+      <input type="text" class="form-input" id="ussdRefInput" placeholder="Ex: 2411680XXXXXX" style="margin-bottom:8px">
+      <div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:12px">Entrez la référence SMS puis confirmez.</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" onclick="closeModal('ussdModal')" style="flex:1">Annuler</button>
+      <button class="btn btn-green" onclick="confirmUSSDPayment()" style="flex:1"><i class="fa fa-check"></i> J'ai payé</button>
+    </div>
+  </div>
+</div>
+<div id="toast" style="position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--dark3);border:1px solid var(--border);padding:13px 18px;border-radius:10px;font-size:0.858rem;transform:translateY(80px);opacity:0;transition:all 0.3s;display:flex;align-items:center;gap:9px;max-width:310px;box-shadow:0 8px 30px rgba(0,0,0,0.5)"></div>
+<script>
+  // ═══════════════════════════════════════════
+//  INDÉPENDANCE FINANCIÈRE — Engine v3
+//  Firebase + EmailJS + Mobile Money
+// ═══════════════════════════════════════════
+const EMAILJS_PUBLIC_KEY  = 'e0ziytW7CSCE_PAm';
+const EMAILJS_SERVICE_ID  = 'service_cn4hi5g';
+const EMAILJS_TEMPLATE_ID = 'template_oup2rd5';
+
+// ── Multi-Admin Config ──
+// Les 3 admins s'inscrivent normalement sur le site puis sont promus admin ici
+const ADMIN_EMAILS = [
+  'adminindependancefinancier@gmail.com',
+  'adminindependancefinancier2@gmail.com',
+  'adminindependancefinancier3@gmail.com'
+];
+// Compatibilité rétroactive
+const ADMIN_EMAIL = ADMIN_EMAILS[0];
+const ADMIN_PW    = 'Admin2003'; // mot de passe hérité admin1 (avant inscription)
+
+// ── LeekPay Config ──
+const LEEKPAY_API_KEY = 'pk_live_5MosLN0wFPDxYtlbWcS98dFXbuPim0Lk';
+
+const AFFILIATE_BONUS = 500;
+
+const DEFAULT_PLANS = [
+  {id:'parcelle',    name:'Parcelle',           price:3100,  daily:510,  icon:'🌱', desc:'Plan de démarrage idéal'},
+  {id:'primaire',    name:'Parcelle Primaire',  price:6200,  daily:1000, icon:'🌿', desc:'Double votre investissement initial'},
+  {id:'secondaire',  name:'Parcelle Secondaire',price:9500,  daily:1450, icon:'🌳', desc:'Rendement élevé et stable'},
+  {id:'secondaireV2',name:'Parcelle Sec. V2',   price:12000, daily:1800, icon:'💎', desc:'Performance supérieure'},
+  {id:'vip',         name:'Parcelle VIP',       price:50000, daily:4500, icon:'👑', desc:'Le summum du rendement'},
+];
+
+
+
+// ── EmailJS Init ──
+(function initEmailJS(){
+  if(typeof emailjs !== 'undefined'){ emailjs.init(EMAILJS_PUBLIC_KEY); }
+  else { window.addEventListener('load',()=>{ if(typeof emailjs !== 'undefined') emailjs.init(EMAILJS_PUBLIC_KEY); }); }
+})();
+
+// ── Send Email ──
+async function sendEmail(type, toEmail, toName, params={}){
+  try {
+    if(typeof emailjs === 'undefined') return false;
+    let tp = { to_email:toEmail, to_name:toName, platform_name:'Indépendance Financière' };
+    if(type === 'verification'){
+      tp = {...tp, subject:'Code de vérification — Indépendance Financière',
+        message:`Bonjour ${toName},\n\nVotre code de vérification est :\n\n🔐  ${params.code}  🔐\n\nCe code est valable 15 minutes.\n\nCordialement,\nL'équipe Indépendance Financière`,
+        code: params.code};
+    } else if(type === 'withdrawal_confirm'){
+      tp = {...tp, subject:'Retrait approuvé — Indépendance Financière',
+        message:`Bonjour ${toName},\n\nVotre retrait de ${params.amount} FCFA a été approuvé.\n\n📋 Réseau: ${params.method}\nMontant: ${params.amount} FCFA\nRéférence: ${params.txId}\nDate: ${params.date}\n\nCordialement,\nL'équipe Indépendance Financière`,
+        amount:params.amount, method:params.method, tx_id:params.txId, date:params.date};
+    }
+    const res = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, tp);
+    return res.status === 200;
+  } catch(e){ console.error('[EmailJS]',e); return false; }
+}
+
+// ── LeekPay Retrait ──
+// Note : LeekPay ne propose pas d'API de payout automatique.
+// Les retraits sont approuvés manuellement par l'admin et marqués comme tels.
+async function leekPaySendPayment(txId, amount, network, phoneNumber, holderName, userEmail, userName) {
+  // Simulation d'un retrait manuel approuvé (pas d'API payout LeekPay disponible)
+  console.log('[Retrait] Approuvé manuellement:', {txId, amount, network, phoneNumber, holderName});
+  return { success: true, leekpayId: 'MANUAL-'+txId };
+}
+
+// ── Storage ──
+function getPlans(){ const p=localStorage.getItem('IF_plans'); return p?JSON.parse(p):DEFAULT_PLANS; }
+function savePlans(p){ localStorage.setItem('IF_plans',JSON.stringify(p)); }
+function getUsers(){ return JSON.parse(localStorage.getItem('IF_users')||'[]'); }
+function saveUsers(u){ localStorage.setItem('IF_users',JSON.stringify(u)); }
+function getTransactions(){ return JSON.parse(localStorage.getItem('IF_transactions')||'[]'); }
+function saveTransactions(t){ localStorage.setItem('IF_transactions',JSON.stringify(t)); }
+function getCurrentUser(){ const e=sessionStorage.getItem('IF_currentUser'); return e?JSON.parse(e):null; }
+function setCurrentUser(u){ sessionStorage.setItem('IF_currentUser',JSON.stringify(u)); }
+function getAnnounce(){ return localStorage.getItem('IF_announce')||''; }
+function saveAnnounce(t){ localStorage.setItem('IF_announce',t); }
+
+// ── Firebase Sync ──
+async function fbSaveUser(u){
+  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'users',u.id),u); }
+  catch(e){ console.warn('[FB] saveUser:',e.message); }
+}
+async function fbSaveTx(tx){
+  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'transactions',tx.id),tx); }
+  catch(e){ console.warn('[FB] saveTx:',e.message); }
+}
+async function fbSavePlans(plans){
+  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'config','plans'),{plans}); }
+  catch(e){ console.warn('[FB] savePlans:',e.message); }
+}
+async function fbLoadAll(){
+  try{
+    if(!window._db) return;
+    const {collection,getDocs,doc,getDoc}=window._fsHelpers;
+    const uSnap=await getDocs(collection(window._db,'users'));
+    if(!uSnap.empty){
+      const fbUsers=[]; uSnap.forEach(d=>fbUsers.push(d.data()));
+      const local=getUsers();
+      const merged=[...local];
+      fbUsers.forEach(fu=>{
+        const lidx=merged.findIndex(u=>u.id===fu.id);
+        if(lidx===-1){ merged.push(fu); }
+        else {
+          const lu=merged[lidx];
+          if(!lu.emailVerified && lu.emailVerifyCode){ return; }
+          merged[lidx]={...fu, emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+        }
+      });
+      saveUsers(merged);
+    }
+    const tSnap=await getDocs(collection(window._db,'transactions'));
+    if(!tSnap.empty){
+      const fbTxs=[]; tSnap.forEach(d=>fbTxs.push(d.data()));
+      const local=getTransactions();
+      const merged=[...local];
+      fbTxs.forEach(ft=>{ if(!merged.find(t=>t.id===ft.id)) merged.push(ft); });
+      saveTransactions(merged);
+    }
+    const pSnap=await getDoc(doc(window._db,'config','plans'));
+    if(pSnap.exists()&&pSnap.data().plans){ savePlans(pSnap.data().plans); }
+    console.log('[Firebase] Sync OK');
+  } catch(e){ console.warn('[FB] loadAll:',e.message); }
+}
+
+// ── Utils ──
+function genId(){ return Math.random().toString(36).substr(2,9).toUpperCase(); }
+function genCode(){ return Math.floor(100000+Math.random()*900000).toString(); }
+function fmtMoney(n){ return Number(n).toLocaleString('fr-FR'); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const icons={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  t.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  t.style.transform='translateY(0)'; t.style.opacity='1';
+  setTimeout(()=>{ t.style.transform='translateY(80px)'; t.style.opacity='0'; },3400);
+}
+function showAlert(id,msg,type='error'){
+  const el=document.getElementById(id); if(!el) return;
+  el.className=`alert alert-${type} show`; el.textContent=msg;
+  setTimeout(()=>{ if(el) el.className='alert'; },4500);
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>{ p.classList.remove('active'); p.style.display='none'; });
+  const pg=document.getElementById(id); pg.classList.add('active');
+  pg.style.display=(id==='dashboard'||id==='admin')?'flex':'block';
+  }
+  // ── Money Rain ──
+let moneyRainActive=false, moneyRafId=null;
+function startMoneyRain(){
+  if(moneyRainActive) return;
+  moneyRainActive=true;
+  const canvas=document.getElementById('moneyCanvas');
+  const ctx=canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  const bills=['💵','💴','💶','💷','💸','🤑','💰','💳'];
+  const particles=[];
+  const COUNT=window.innerWidth<600?22:42;
+  for(let i=0;i<COUNT;i++){
+    particles.push({ x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight-window.innerHeight,
+      vx:(Math.random()-0.5)*1.2, vy:0.8+Math.random()*1.8,
+      rot:Math.random()*Math.PI*2, rotV:(Math.random()-0.5)*0.06,
+      size:18+Math.random()*22, symbol:bills[Math.floor(Math.random()*bills.length)],
+      opacity:0.55+Math.random()*0.45, swing:Math.random()*0.04, swingOffset:Math.random()*Math.PI*2 });
+  }
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height); frame++;
+    particles.forEach(p=>{
+      p.x+=p.vx+Math.sin(frame*p.swing+p.swingOffset)*0.6; p.y+=p.vy; p.rot+=p.rotV;
+      if(p.y>canvas.height+60){ p.y=-60; p.x=Math.random()*canvas.width; }
+      ctx.save(); ctx.globalAlpha=p.opacity; ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(p.symbol,0,0); ctx.restore();
+    });
+    moneyRafId=requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopMoneyRain(){
+  moneyRainActive=false;
+  if(moneyRafId) cancelAnimationFrame(moneyRafId);
+  const canvas=document.getElementById('moneyCanvas');
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+}
+
+// ── Announce ──
+function loadAnnounce(){
+  const txt=getAnnounce(); const b=document.getElementById('announceBanner');
+  if(txt){ b.classList.add('show'); document.getElementById('announceText').textContent=txt; }
+  else { b.classList.remove('show'); }
+}
+function publishAnnounce(){
+  const txt=document.getElementById('announceInput').value.trim();
+  if(!txt) return showAlert('announceFormAlert','Entrez un texte.');
+  saveAnnounce(txt); loadAnnounce();
+  document.getElementById('currentAnnouncePreview').textContent=txt;
+  showToast('Annonce publiée !','success');
+}
+function clearAnnounce(){
+  saveAnnounce(''); loadAnnounce();
+  document.getElementById('currentAnnouncePreview').textContent='Aucune annonce active';
+  const el=document.getElementById('announceInput'); if(el) el.value='';
+  showToast('Annonce supprimée.','info');
+}
+
+// ── Landing Plans ──
+function renderLandingPlans(){
+  const plans=getPlans();
+  document.getElementById('landingPlanCount').textContent=plans.length;
+  const mid=Math.floor(plans.length/2);
+  document.getElementById('landingPlansGrid').innerHTML=plans.map((p,i)=>`
+    <div class="plan-card ${i===mid?'featured':''}">
+      <div class="plan-name">${p.icon||''} ${p.name}</div>
+      <div class="plan-price">${fmtMoney(p.price)} <span>FCFA</span></div>
+      <div class="plan-gain">Gain quotidien<br><strong>+${fmtMoney(p.daily)} FCFA</strong></div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:14px">${p.desc||''}</p>
+      <button class="btn ${i===mid?'btn-gold':'btn-outline'} btn-sm" style="width:100%" onclick="openModal('registerModal')">Investir</button>
+    </div>`).join('');
+}
+
+// ── Auth ──
+async function handleRegister(){
+  const fn=document.getElementById('regFirstname').value.trim();
+  const ln=document.getElementById('regLastname').value.trim();
+  const em=document.getElementById('regEmail').value.trim().toLowerCase();
+  const ph=document.getElementById('regPhone').value.trim();
+  const country=document.getElementById('regCountry').value.trim();
+  const pw=document.getElementById('regPassword').value;
+  const ref=document.getElementById('regReferral').value.trim().toUpperCase();
+  if(!fn||!ln||!em||!ph||!pw) return showAlert('registerAlert','Tous les champs obligatoires doivent être remplis.');
+  if(pw.length<6) return showAlert('registerAlert','Le mot de passe doit avoir au moins 6 caractères.');
+  if(!/\S+@\S+\.\S+/.test(em)) return showAlert('registerAlert','Email invalide.');
+  const users=getUsers();
+  if(users.find(u=>u.email===em)) return showAlert('registerAlert','Cet email est déjà utilisé.');
+  let referrerId=null;
+  if(ref){ const referrer=users.find(u=>u.refCode===ref); if(!referrer) return showAlert('registerAlert','Code de parrainage invalide.'); referrerId=referrer.id; }
+  const regBtn=document.querySelector('#registerModal .btn-gold');
+  if(regBtn){ regBtn.innerHTML='<span class="spinner"></span> Envoi du code...'; regBtn.disabled=true; }
+  const code=genCode();
+  const isAdmin=ADMIN_EMAILS.includes(em);
+  const adminIdx=ADMIN_EMAILS.indexOf(em);
+  const newUser={
+    id:genId(), firstname:fn, lastname:ln, email:em, phone:ph, country:country||'',
+    password:pw, refCode:'IF-'+genId().substr(0,8),
+    balance:0, totalWithdrawn:0, plans:[],
+    kyc: isAdmin ? 'verified' : 'pending',
+    emailVerified: isAdmin ? true : false,
+    emailVerifyCode: isAdmin ? null : code,
+    referrerId: isAdmin ? null : referrerId,
+    referrals:[], affiliateBonus:0,
+    createdAt:Date.now(),
+    role: isAdmin ? 'admin' : 'user',
+    adminIndex: isAdmin ? adminIdx : undefined,
+    lastBonusDate:null, pendingBonus:0
+  };
+  users.push(newUser); saveUsers(users);
+  if(isAdmin){
+    setCurrentUser(newUser); saveUsers(users); fbSaveUser(newUser);
+    closeModal('registerModal'); stopMoneyRain(); loadAdmin(); showPage('admin');
+    if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
+    showToast('Compte administrateur créé et connecté !','success');
+    return;
+  }
+  setCurrentUser(newUser);
+  closeModal('registerModal'); openModal('emailVerifyModal');
+  const sent=await sendEmail('verification',em,fn+' '+ln,{code});
+  if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
+  if(sent){ showToast('Code envoyé à '+em+' ✉️','success'); }
+  else {
+    showToast('Code: '+code+' (email indisponible)','warning');
+    setTimeout(()=>{
+      const el=document.getElementById('emailVerifyCode');
+      if(el){ el.value=code; el.style.borderColor='var(--gold)'; }
+      showAlert('emailVerifyAlert','📋 Code (email indisponible): '+code,'info');
+    },300);
+  }
+  setTimeout(()=>fbSaveUser(newUser),2000);
+}
+
+function verifyEmail(){
+  const entered=document.getElementById('emailVerifyCode').value.trim();
+  if(!entered||entered.length!==6) return showAlert('emailVerifyAlert','Entrez le code à 6 chiffres reçu par email.');
+  const cu=getCurrentUser();
+  if(!cu) return showAlert('emailVerifyAlert','Session expirée. Veuillez vous réinscrire.');
+  const expected=cu.emailVerifyCode;
+  if(!expected) return showAlert('emailVerifyAlert','Aucun code en attente. Cliquez "Renvoyer le code".');
+  if(entered!==expected) return showAlert('emailVerifyAlert','Code incorrect. Vérifiez votre email ou renvoyez le code.');
+  const users=getUsers(); const idx=users.findIndex(u=>u.id===cu.id);
+  if(idx===-1){
+    const updated={...cu,emailVerified:true,kyc:'email_verified',emailVerifyCode:null};
+    users.push(updated); saveUsers(users); setCurrentUser(updated);
+  } else {
+    users[idx].emailVerified=true; users[idx].kyc='email_verified'; users[idx].emailVerifyCode=null;
+    if(users[idx].referrerId){
+      const ridx=users.findIndex(u=>u.id===users[idx].referrerId);
+      if(ridx!==-1){
+        users[ridx].balance=(users[ridx].balance||0)+AFFILIATE_BONUS;
+        users[ridx].affiliateBonus=(users[ridx].affiliateBonus||0)+AFFILIATE_BONUS;
+        users[ridx].referrals=users[ridx].referrals||[];
+        if(!users[ridx].referrals.includes(users[idx].id)) users[ridx].referrals.push(users[idx].id);
+        addTransaction(users[ridx].id,'affiliate',AFFILIATE_BONUS,'approved','Parrainage: '+users[idx].firstname+' '+users[idx].lastname);
+        fbSaveUser(users[ridx]);
+      }
+    }
+    saveUsers(users); setCurrentUser(users[idx]); fbSaveUser(users[idx]);
+  }
+  closeModal('emailVerifyModal'); showToast('Email vérifié ! ✅','success');
+  stopMoneyRain(); loadDashboard(); showPage('dashboard');
+}
+
+async function resendCode(){
+  const cu=getCurrentUser();
+  if(!cu) return showAlert('emailVerifyAlert','Session expirée. Veuillez vous réinscrire.');
+  const newCode=genCode();
+  const users=getUsers(); const idx=users.findIndex(v=>v.id===cu.id);
+  if(idx!==-1){ users[idx].emailVerifyCode=newCode; saveUsers(users); }
+  const updated={...cu,emailVerifyCode:newCode}; setCurrentUser(updated);
+  const sent=await sendEmail('verification',cu.email,cu.firstname+' '+cu.lastname,{code:newCode});
+  if(sent){ showToast('Nouveau code envoyé à '+cu.email+' ✉️','success'); }
+  else {
+    showToast('Code: '+newCode+' (email indisponible)','warning');
+    setTimeout(()=>{
+      const el=document.getElementById('emailVerifyCode');
+      if(el){ el.value=newCode; el.style.borderColor='var(--gold)'; }
+      showAlert('emailVerifyAlert','📋 Nouveau code: '+newCode,'info');
+    },300);
+  }
+  setTimeout(()=>fbSaveUser(updated),1500);
+}
+
+function handleLogin(){
+  const em=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pw=document.getElementById('loginPassword').value;
+  if(!em||!pw) return showAlert('loginAlert','Renseignez email et mot de passe.');
+  // Connexion admin1 hérité (avant inscription)
+  if(em===ADMIN_EMAIL&&pw===ADMIN_PW){
+    const adminUser={id:'admin',role:'admin',firstname:'Admin 1',lastname:'IF',email:em,adminIndex:0};
+    setCurrentUser(adminUser);
+    closeModal('loginModal'); stopMoneyRain(); loadAdmin(); showPage('admin'); return;
+  }
+  const users=getUsers(); const user=users.find(u=>u.email===em&&u.password===pw);
+  if(!user) return showAlert('loginAlert','Email ou mot de passe incorrect.');
+  // Promouvoir automatiquement si l'email est dans la liste admin
+  if(ADMIN_EMAILS.includes(em) && user.role!=='admin'){
+    const users2=getUsers(); const idx2=users2.findIndex(u=>u.id===user.id);
+    if(idx2!==-1){ users2[idx2].role='admin'; users2[idx2].adminIndex=ADMIN_EMAILS.indexOf(em); saveUsers(users2); fbSaveUser(users2[idx2]); user.role='admin'; user.adminIndex=ADMIN_EMAILS.indexOf(em); }
+  }
+  setCurrentUser(user); closeModal('loginModal');
+  if(user.role==='admin'){ stopMoneyRain(); loadAdmin(); showPage('admin'); return; }
+  if(!user.emailVerified){ openModal('emailVerifyModal'); return; }
+  stopMoneyRain(); loadDashboard(); showPage('dashboard');
+}
+
+// Helper: est-ce que l'utilisateur connecté est admin ?
+function isCurrentAdmin(){
+  const cu=getCurrentUser(); return cu && cu.role==='admin';
+}
+// Index de l'admin connecté (0, 1 ou 2)
+function getCurrentAdminIndex(){
+  const cu=getCurrentUser(); if(!cu||cu.role!=='admin') return -1;
+  if(typeof cu.adminIndex === 'number') return cu.adminIndex;
+  return ADMIN_EMAILS.indexOf(cu.email);
+}
+
+function logout(){
+  sessionStorage.removeItem('IF_currentUser');
+  showPage('landing'); startMoneyRain(); renderLandingPlans();
+  showToast('Déconnecté.','info');
+}
+
+function addTransaction(userId,type,amount,status,note=''){
+  const txs=getTransactions();
+  const tx={id:genId(),userId,type,amount,status,note,date:Date.now()};
+  txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
+  }
+  // ── Dashboard ──
+let bonusInterval;
+function loadDashboard(){
+  const cu=getCurrentUser(); if(!cu||cu.role==='admin') return;
+  let users=getUsers(); let u=users.find(x=>x.id===cu.id)||cu;
+  dailyBonusCredit(u);
+  users=getUsers(); u=users.find(x=>x.id===cu.id)||cu; setCurrentUser(u);
+  const plans=getPlans();
+  const planNames=u.plans&&u.plans.length?u.plans.map(pid=>plans.find(x=>x.id===pid)?.name||pid).join(', '):'Aucun plan';
+  document.getElementById('sidebarAvatar').textContent=(u.firstname||'U')[0].toUpperCase();
+  document.getElementById('sidebarName').textContent=u.firstname+' '+u.lastname;
+  document.getElementById('sidebarPlan').textContent=planNames;
+  document.getElementById('balanceDisplay').textContent=fmtMoney(u.balance||0);
+  document.getElementById('withdrawBalance').textContent=fmtMoney(u.balance||0)+' FCFA';
+  const db=computeDailyBonus(u);
+  document.getElementById('dailyBonusDisplay').textContent=fmtMoney(db);
+  document.getElementById('accumulatedBonus').textContent=fmtMoney(u.pendingBonus||0)+' FCFA';
+  document.getElementById('totalWithdrawnDisplay').textContent=fmtMoney(u.totalWithdrawn||0);
+  const rc=(u.referrals||[]).length;
+  document.getElementById('referralCount').textContent=rc;
+  document.getElementById('affiliateCount').textContent=rc;
+  document.getElementById('affiliateBonus').textContent=fmtMoney(u.affiliateBonus||0);
+  document.getElementById('kycBanner').style.display=u.kyc==='verified'?'none':'flex';
+  document.getElementById('refLink').textContent=window.location.href.split('?')[0]+'?ref='+u.refCode;
+  document.getElementById('profileAvatar').textContent=(u.firstname||'U')[0].toUpperCase();
+  document.getElementById('profileName').textContent=u.firstname+' '+u.lastname;
+  document.getElementById('profileEmail').textContent=u.email;
+  document.getElementById('profilePlan').textContent=planNames;
+  document.getElementById('profileFirstname').value=u.firstname||'';
+  document.getElementById('profileLastname').value=u.lastname||'';
+  document.getElementById('profilePhone').value=u.phone||'';
+  document.getElementById('profileCountry').value=u.country||'';
+  renderPlansGrid(u); renderTransactions(u.id); renderKYC(u);
+  clearInterval(bonusInterval); bonusInterval=setInterval(updateBonusTimer,1000); updateBonusTimer();
+}
+
+function computeDailyBonus(u){
+  const plans=getPlans();
+  if(!u.plans||!u.plans.length) return 0;
+  return u.plans.reduce((sum,pid)=>{ const p=plans.find(x=>x.id===pid); return sum+(p?p.daily:0); },0);
+}
+
+function dailyBonusCredit(u){
+  const today=new Date().toDateString();
+  if(u.lastBonusDate===today) return;
+  const bonus=computeDailyBonus(u); if(bonus<=0) return;
+  const users=getUsers(); const idx=users.findIndex(x=>x.id===u.id); if(idx===-1) return;
+  users[idx].balance=(users[idx].balance||0)+bonus;
+  users[idx].pendingBonus=(users[idx].pendingBonus||0)+bonus;
+  users[idx].lastBonusDate=today;
+  saveUsers(users); setCurrentUser(users[idx]);
+  addTransaction(u.id,'bonus',bonus,'approved','Bonus quotidien automatique');
+  showToast('+'+fmtMoney(bonus)+' FCFA bonus crédité !','success');
+}
+
+function updateBonusTimer(){
+  const now=new Date(); const midnight=new Date(now); midnight.setHours(24,0,0,0);
+  const diff=midnight-now;
+  const h=Math.floor(diff/3600000).toString().padStart(2,'0');
+  const m=Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+  const s=Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+  const el=document.getElementById('timerCount'); if(el) el.textContent=h+':'+m+':'+s;
+}
+
+let selectedPlanId=null;
+function renderPlansGrid(u){
+  const plans=getPlans();
+  document.getElementById('plansGrid').innerHTML=plans.map(p=>{
+    const owned=(u.plans||[]).includes(p.id);
+    const canAfford=(u.balance||0)>=p.price;
+    return `<div class="plan-dash-card">
+      ${owned?'<div class="plan-owned">✓ Possédé</div>':''}
+      <div class="plan-dash-name">${p.icon||''} ${p.name}</div>
+      <div class="plan-dash-price">${fmtMoney(p.price)} FCFA</div>
+      <div class="plan-dash-gain">+${fmtMoney(p.daily)} FCFA/jour</div>
+      <p style="font-size:0.76rem;color:var(--text-muted);margin-bottom:10px">${p.desc||''}</p>
+      ${owned
+        ?'<button class="btn btn-sm" style="width:100%;background:var(--dark4);color:var(--text-muted);border:1px solid var(--border);cursor:default;border-radius:6px;padding:7px 0" disabled>Déjà activé</button>'
+        :`<button class="btn btn-sm ${canAfford?'btn-gold':'btn-outline'}" style="width:100%" onclick="openBuyPlan('${p.id}')">${canAfford?'<i class="fa fa-shopping-cart"></i> Acheter':'Solde insuffisant'}</button>`
+      }
+    </div>`;
+  }).join('');
+  const myGrid=document.getElementById('myPlansGrid');
+  const owned=plans.filter(p=>(u.plans||[]).includes(p.id));
+  myGrid.innerHTML=owned.length
+    ?'<div class="plans-dash-grid">'+owned.map(p=>`<div class="plan-dash-card"><div class="plan-owned">✓ Actif</div><div class="plan-dash-name">${p.icon||''} ${p.name}</div><div class="plan-dash-price">${fmtMoney(p.price)} FCFA</div><div class="plan-dash-gain">+${fmtMoney(p.daily)} FCFA/jour</div></div>`).join('')+'</div>'
+    :'<p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:20px">Vous n\'avez pas encore de parcelles.</p>';
+}
+
+function openBuyPlan(planId){
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const u=users.find(x=>x.id===cu.id)||cu;
+  const plans=getPlans(); const p=plans.find(x=>x.id===planId); if(!p) return;
+  selectedPlanId=planId;
+  document.getElementById('buyPlanContent').innerHTML=`
+    <div style="background:var(--dark4);border-radius:9px;padding:14px;margin-bottom:14px">
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:5px">Plan sélectionné</div>
+      <div style="font-size:1.25rem;font-weight:600">${p.icon||''} ${p.name}</div>
+      <div style="color:var(--gold);font-size:1.5rem;font-family:'Playfair Display',serif;font-weight:700;margin:5px 0">${fmtMoney(p.price)} FCFA</div>
+      <div style="color:var(--accent2);font-size:0.875rem">+${fmtMoney(p.daily)} FCFA / jour</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.858rem;margin-bottom:5px">
+      <span style="color:var(--text-muted)">Votre solde</span><span>${fmtMoney(u.balance||0)} FCFA</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.858rem;margin-bottom:14px">
+      <span style="color:var(--text-muted)">Après achat</span><span style="color:var(--gold)">${fmtMoney((u.balance||0)-p.price)} FCFA</span>
+    </div>`;
+  document.getElementById('buyPlanAlert').className='alert';
+  openModal('buyPlanModal');
+}
+
+function confirmBuyPlan(){
+  if(!selectedPlanId) return;
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const idx=users.findIndex(x=>x.id===cu.id); if(idx===-1) return;
+  const plans=getPlans(); const p=plans.find(x=>x.id===selectedPlanId); if(!p) return;
+  if((users[idx].balance||0)<p.price) return showAlert('buyPlanAlert','Solde insuffisant.');
+  if((users[idx].plans||[]).includes(p.id)) return showAlert('buyPlanAlert','Vous possédez déjà ce plan.');
+  users[idx].balance-=p.price;
+  users[idx].plans=users[idx].plans||[]; users[idx].plans.push(p.id);
+  saveUsers(users); setCurrentUser(users[idx]);
+  addTransaction(cu.id,'purchase',p.price,'approved','Achat: '+p.name);
+  closeModal('buyPlanModal');
+  showToast(p.name+' activé ! +'+fmtMoney(p.daily)+' FCFA/jour','success');
+  loadDashboard();
+}
+
+function renderTransactions(userId){
+  const txs=getTransactions().filter(t=>t.userId===userId).reverse().slice(0,30);
+  const tbody=document.getElementById('transactionsTbody');
+  const recent=document.getElementById('recentTransactionsTable');
+  const typeLabels={bonus:'Bonus',purchase:'Achat parcelle',deposit:'Dépôt',withdrawal:'Retrait',affiliate:'Parrainage'};
+  if(!txs.length){
+    if(tbody) tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:26px">Aucune transaction.</td></tr>';
+    if(recent) recent.innerHTML='<p style="color:var(--text-muted);font-size:0.875rem;text-align:center;padding:18px">Aucune transaction.</p>';
+    return;
+  }
+  const rows=txs.map(t=>`<tr>
+    <td>${fmtDate(t.date)}</td>
+    <td>${typeLabels[t.type]||t.type}</td>
+    <td style="color:${t.type==='withdrawal'||t.type==='purchase'?'#E74C3C':'#2ECC71'}">${t.type==='withdrawal'||t.type==='purchase'?'-':'+'}${fmtMoney(t.amount)} FCFA</td>
+    <td><span class="badge badge-${t.status==='approved'?'success':t.status==='pending'?'pending':'danger'}">${t.status==='approved'?'Approuvé':t.status==='pending'?'En attente':'Refusé'}</span></td>
+    <td style="color:var(--text-muted);font-size:0.78rem">${t.note||'—'}</td>
+  </tr>`).join('');
+  if(tbody) tbody.innerHTML=rows;
+  if(recent) recent.innerHTML='<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Montant</th><th>Statut</th><th>Détails</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+// ── Deposit & MoMo ──
+function isBeninUser(){
+  const cu=getCurrentUser(); if(!cu) return false;
+  const users=getUsers(); const u=users.find(x=>x.id===cu.id)||cu;
+  const country=(u.country||'').toLowerCase().trim();
+  return country==='bénin'||country==='benin'||country==='bj'||country==='';
+}
+
+function updateDepositPreview(){ /* non utilisé — LeekPay gère tout */ }
+function selectNetwork(net){ /* non utilisé — LeekPay gère tout */ }
+function launchUSSD(e){ /* non utilisé — LeekPay gère tout */ }
+function confirmUSSDPayment(){ /* non utilisé — LeekPay gère tout */ }
+
+// ── LeekPay Dépôt ──
+function updateLeekPayBtn(){
+  const amt=parseInt(document.getElementById('depositAmount').value)||0;
+  const btn=document.getElementById('leekpayBtn');
+  if(btn) btn.setAttribute('data-leekpay-amount', amt<500?500:amt);
+}
+
+function submitDeposit(){
+  const amt=parseInt(document.getElementById('depositAmount').value);
+  if(!amt||amt<500) return showAlert('depositAlert','Montant minimum : 500 FCFA.');
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const u=users.find(x=>x.id===cu.id)||cu;
+
+  if(typeof LeekPay === 'undefined')
+    return showAlert('depositAlert','❌ LeekPay non chargé. Vérifiez votre connexion internet.','error');
+
+  // Mettre à jour le montant sur le vrai bouton LeekPay
+  const lpBtn=document.getElementById('leekpayBtn');
+  if(!lpBtn) return showAlert('depositAlert','Erreur technique. Rechargez la page.','error');
+  lpBtn.setAttribute('data-leekpay-amount', amt);
+  lpBtn.setAttribute('data-leekpay-email', u.email||'');
+
+  // Préparer les callbacks AVANT de cliquer
+  // La transaction n'est créée QU'AU SUCCÈS du paiement
+  window._pendingDepositAmt = amt;
+  window._pendingDepositUserId = cu.id;
+
+  // Cliquer le vrai bouton LeekPay (déjà reconnu par leekpay.js)
+  lpBtn.click();
+}
+
+// Callbacks LeekPay — appelés par le widget
+window.leekpayOnSuccess = function(data){
+  const amt = window._pendingDepositAmt;
+  const userId = window._pendingDepositUserId;
+  if(!amt||!userId) return;
+  // Créer la transaction seulement maintenant
+  const txId=genId();
+  const tx={id:txId, userId, type:'deposit', amount:amt, status:'approved',
+    note:'LeekPay | Confirmé', leekpayId:data?.payment_id||data?.id||txId, date:Date.now()};
+  const txs=getTransactions(); txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
+  // Créditer le solde immédiatement
+  const usrs=getUsers(); const uidx=usrs.findIndex(x=>x.id===userId);
+  if(uidx!==-1){ usrs[uidx].balance=(usrs[uidx].balance||0)+amt; saveUsers(usrs); setCurrentUser(usrs[uidx]); fbSaveUser(usrs[uidx]); }
+  window._pendingDepositAmt=null; window._pendingDepositUserId=null;
+  document.getElementById('depositAmount').value='';
+  showAlert('depositAlert','✅ Dépôt de '+fmtMoney(amt)+' FCFA confirmé ! Solde crédité.','success');
+  showToast('💰 Solde crédité de '+fmtMoney(amt)+' FCFA !','success');
+  loadDashboard();
+};
+
+window.leekpayOnCancel = function(){
+  window._pendingDepositAmt=null; window._pendingDepositUserId=null;
+  showAlert('depositAlert','⚠️ Paiement annulé. Aucun montant débité.','warning');
+};
+
+function updateWithdrawPlaceholder(){
+  const net=document.getElementById('withdrawNetwork').value;
+  const field=document.getElementById('withdrawAccount'); if(!field) return;
+  if(net.includes('MTN')) field.placeholder='+229 01 XX XX XX XX';
+  else if(net.includes('Moov')) field.placeholder='+229 01 95 XX XX XX';
+  else if(net.includes('Celtiis')) field.placeholder='+229 01 40 XX XX XX';
+  else if(net.includes('Orange')) field.placeholder='+225 07 XX XX XX XX';
+  else if(net.includes('Wave')) field.placeholder='+221 7X XXX XX XX';
+  else field.placeholder='+indicatif numéro';
+}
+
+function submitAdminWithdrawal(){
+  const amt=parseInt(document.getElementById('adminWithdrawAmount').value);
+  const network=document.getElementById('adminWithdrawNetwork').value;
+  const phone=document.getElementById('adminWithdrawPhone').value.trim();
+  const name=document.getElementById('adminWithdrawName').value.trim();
+  const cu=getCurrentUser(); if(!cu||cu.role!=='admin') return;
+  if(!amt||amt<1000) return showToast('Montant minimum : 1 000 FCFA.','error');
+  if(!network) return showToast('Choisissez votre réseau Mobile Money.','error');
+  if(!phone||!phone.startsWith('+')) return showToast('Numéro invalide (commencer par + et indicatif pays).','error');
+  if(!name) return showToast('Renseignez le nom du titulaire.','error');
+  const adminIdx=getCurrentAdminIndex();
+  const tx={
+    id:genId(), userId:cu.id, type:'withdrawal', amount:amt,
+    status:'pending_admin_approval',
+    note:network+' | '+phone+' | '+name,
+    requestedByAdmin: adminIdx,
+    requestedByEmail: cu.email,
+    approvedByAdmin: null,
+    date:Date.now()
+  };
+  const txs=getTransactions(); txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
+  document.getElementById('adminWithdrawAmount').value='';
+  document.getElementById('adminWithdrawPhone').value='';
+  document.getElementById('adminWithdrawName').value='';
+  document.getElementById('adminWithdrawNetwork').value='';
+  showToast('✅ Demande de retrait soumise. Un autre administrateur doit l\'approuver pour que LeekPay envoie le paiement.','info');
+  loadAdmin();
+}
+
+function submitWithdrawal(){
+  const amt=parseInt(document.getElementById('withdrawAmount').value);
+  const network=document.getElementById('withdrawNetwork').value;
+  const account=document.getElementById('withdrawAccount').value.trim();
+  const accName=document.getElementById('withdrawAccountName').value.trim();
+  const cu=getCurrentUser(); if(!cu) return;
+
+  // Cas : un admin demande un retrait depuis le panneau admin
+  if(cu.role==='admin'){
+    if(!amt||amt<1000) return showToast('Montant minimum : 1 000 FCFA.','error');
+    if(!network) return showToast('Choisissez votre réseau Mobile Money.','error');
+    if(!account||!account.startsWith('+')) return showToast('Numéro invalide (avec indicatif pays).','error');
+    if(!accName) return showToast('Renseignez le nom du titulaire.','error');
+    const adminIdx=getCurrentAdminIndex();
+    const tx={
+      id:genId(), userId:cu.id, type:'withdrawal', amount:amt, status:'pending_admin_approval',
+      note:network+' | '+account+' | '+accName,
+      requestedByAdmin: adminIdx,
+      requestedByEmail: cu.email,
+      approvedByAdmin: null,
+      date:Date.now()
+    };
+    const txs=getTransactions(); txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
+    showToast('Demande de retrait admin soumise. Un autre administrateur doit l\'approuver.','info');
+    loadAdmin();
+    return;
+  }
+
+  // Cas membre normal
+  const users=getUsers(); const u=users.find(x=>x.id===cu.id)||cu;
+  if(!amt||amt<1000) return showAlert('withdrawAlert','Montant minimum : 1 000 FCFA.');
+  if(!network) return showAlert('withdrawAlert','Choisissez votre réseau Mobile Money.');
+  if(!account) return showAlert('withdrawAlert','Renseignez votre numéro avec l\'indicatif pays.');
+  if(!account.startsWith('+')) return showAlert('withdrawAlert','Le numéro doit commencer par + et l\'indicatif pays.');
+  if(!accName) return showAlert('withdrawAlert','Renseignez le nom du titulaire du compte.');
+  if((u.balance||0)<amt) return showAlert('withdrawAlert','Solde insuffisant pour ce retrait.');
+  addTransaction(cu.id,'withdrawal',amt,'pending',network+' | '+account+' | '+accName);
+  document.getElementById('withdrawAmount').value='';
+  document.getElementById('withdrawAccount').value='';
+  document.getElementById('withdrawAccountName').value='';
+  document.getElementById('withdrawNetwork').value='';
+  showAlert('withdrawAlert','✅ Demande de retrait de '+fmtMoney(amt)+' FCFA soumise ! Le paiement sera effectué automatiquement après approbation.','success');
+  loadDashboard();
+}
+  // ── KYC ──
+function renderKYC(u){
+  const c=document.getElementById('kycContent');
+  const s2=document.getElementById('kycStep2'),s3=document.getElementById('kycStep3'),s4=document.getElementById('kycStep4');
+  if(u.emailVerified){ s2.className='kyc-step done'; s2.querySelector('.kyc-step-num').textContent='✓'; }
+  if(u.kyc==='submitted'||u.kyc==='verified'){ s3.className='kyc-step done'; s3.querySelector('.kyc-step-num').textContent='✓'; }
+  if(u.kyc==='verified'){ s4.className='kyc-step done'; s4.querySelector('.kyc-step-num').textContent='✓'; }
+  if(u.kyc==='verified'){ c.innerHTML='<div class="alert alert-success show" style="display:flex;align-items:center;gap:10px"><i class="fa fa-check-circle" style="font-size:1.3rem"></i><div><strong>KYC validé</strong><br>Votre identité a été vérifiée avec succès.</div></div>'; return; }
+  if(u.kyc==='submitted'){ c.innerHTML='<div class="alert alert-info show">Votre dossier KYC est en cours d\'examen. Délai: 24-48h.</div>'; return; }
+  c.innerHTML=`
+    <div id="kycAlert" class="alert"></div>
+    <div class="form-group"><label class="form-label">Type de document</label>
+      <select class="form-input" id="kycDocType">
+        <option value="">-- Choisir --</option>
+        <option value="cni">Carte Nationale d'Identité</option>
+        <option value="passeport">Passeport</option>
+        <option value="permis">Permis de conduire</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Numéro du document</label><input type="text" class="form-input" id="kycDocNumber" placeholder="Ex: ABC123456"></div>
+    <div class="form-group"><label class="form-label">Date de naissance</label><input type="date" class="form-input" id="kycDob"></div>
+    <div class="form-group"><label class="form-label">Adresse complète</label><input type="text" class="form-input" id="kycAddress" placeholder="Rue, Ville, Pays"></div>
+    <div style="background:rgba(201,168,76,0.07);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:16px;font-size:0.8rem;color:var(--text-muted)"><i class="fa fa-lock" style="color:var(--gold)"></i> Vos données sont chiffrées et protégées.</div>
+    <button class="btn btn-gold btn-block" onclick="submitKYC()"><i class="fa fa-paper-plane"></i> Soumettre le dossier KYC</button>`;
+}
+
+function submitKYC(){
+  const dt=document.getElementById('kycDocType')?.value;
+  const dn=document.getElementById('kycDocNumber')?.value.trim();
+  const dob=document.getElementById('kycDob')?.value;
+  const addr=document.getElementById('kycAddress')?.value.trim();
+  if(!dt||!dn||!dob||!addr) return showAlert('kycAlert','Tous les champs sont requis.');
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const idx=users.findIndex(x=>x.id===cu.id); if(idx===-1) return;
+  users[idx].kyc='submitted';
+  users[idx].kycData={docType:dt,docNumber:dn,dob,address:addr,submittedAt:Date.now()};
+  saveUsers(users); setCurrentUser(users[idx]); fbSaveUser(users[idx]);
+  showToast('Dossier KYC soumis !','success'); loadDashboard(); switchTab('kyc');
+}
+
+// ── Profile ──
+function saveProfile(){
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const idx=users.findIndex(x=>x.id===cu.id); if(idx===-1) return;
+  users[idx].firstname=document.getElementById('profileFirstname').value.trim()||users[idx].firstname;
+  users[idx].lastname=document.getElementById('profileLastname').value.trim()||users[idx].lastname;
+  users[idx].phone=document.getElementById('profilePhone').value.trim();
+  users[idx].country=document.getElementById('profileCountry').value.trim();
+  saveUsers(users); setCurrentUser(users[idx]); fbSaveUser(users[idx]);
+  showToast('Profil mis à jour !','success'); loadDashboard();
+}
+function changePassword(){
+  const oldPw=document.getElementById('oldPassword').value;
+  const newPw=document.getElementById('newPassword').value;
+  const cu=getCurrentUser(); if(!cu) return;
+  const users=getUsers(); const idx=users.findIndex(x=>x.id===cu.id); if(idx===-1) return;
+  if(users[idx].password!==oldPw) return showAlert('profileAlert','Ancien mot de passe incorrect.');
+  if(newPw.length<6) return showAlert('profileAlert','Nouveau mot de passe trop court.');
+  users[idx].password=newPw; saveUsers(users); setCurrentUser(users[idx]);
+  showToast('Mot de passe modifié !','success');
+  document.getElementById('oldPassword').value=''; document.getElementById('newPassword').value='';
+}
+
+// ── Affiliate ──
+function copyRefLink(){
+  const cu=getCurrentUser(); if(!cu) return;
+  const u=getUsers().find(x=>x.id===cu.id)||cu;
+  const link=window.location.href.split('?')[0]+'?ref='+u.refCode;
+  navigator.clipboard.writeText(link).then(()=>showToast('Lien copié !','success')).catch(()=>showToast('Lien: '+link,'info'));
+}
+function shareWhatsApp(){
+  const cu=getCurrentUser(); if(!cu) return;
+  const u=getUsers().find(x=>x.id===cu.id)||cu;
+  const link=window.location.href.split('?')[0]+'?ref='+u.refCode;
+  const msg=encodeURIComponent('💰 Rejoignez INDÉPENDANCE FINANCIÈRE !\nInvestissez dès 3 100 FCFA → +510 FCFA/jour garanti.\n🔗 Mon lien: '+link);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+// ── Tabs ──
+const tabTitles={overview:'Tableau de bord',plans:'Mes Parcelles',deposit:'Faire un dépôt',withdraw:'Demande de retrait',transactions:'Historique',affiliate:'Parrainage',kyc:'Vérification KYC',contact:'Service Client',profile:'Mon Profil'};
+function switchTab(name){
+  document.querySelectorAll('#dashboard .tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#sidebar .nav-item').forEach(i=>i.classList.remove('active'));
+  const s=document.getElementById('tab-'+name); if(s) s.classList.add('active');
+  document.querySelectorAll('#sidebar .nav-item').forEach(i=>{ if(i.getAttribute('onclick')&&i.getAttribute('onclick').includes("'"+name+"'")) i.classList.add('active'); });
+  const t=document.getElementById('topbarTitle'); if(t) t.textContent=tabTitles[name]||name;
+  closeSidebar();
+  if(name==='withdraw'){
+    const cu=getCurrentUser(); const u=getUsers().find(x=>x.id===cu?.id)||cu;
+    const el=document.getElementById('withdrawBalance'); if(el) el.textContent=fmtMoney(u?.balance||0)+' FCFA';
+  }
+}
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+// ── Admin ──
+function loadAdmin(){
+  const cu=getCurrentUser();
+  const topbarEmail=document.getElementById('adminTopbarEmail');
+  if(topbarEmail && cu) topbarEmail.textContent=(cu.email||ADMIN_EMAIL)+' (Admin '+(getCurrentAdminIndex()+1)+')';
+  const users=getUsers().filter(u=>u.role!=='admin');
+  const txs=getTransactions();
+  const deposits=txs.filter(t=>t.type==='deposit');
+  const withdrawals=txs.filter(t=>t.type==='withdrawal');
+  const pending=withdrawals.filter(t=>t.status==='pending'||t.status==='pending_admin_approval');
+  document.getElementById('adminUserCount').textContent=users.length;
+  document.getElementById('adminDepTotal').textContent=fmtMoney(deposits.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
+  document.getElementById('adminWithTotal').textContent=fmtMoney(withdrawals.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
+  document.getElementById('adminPendingCount').textContent=pending.length;
+  const wn=document.getElementById('withdrawNotif'); if(wn) wn.style.display=pending.length>0?'inline-block':'none';
+  const rut=document.getElementById('adminRecentUsers');
+  if(rut) rut.innerHTML=users.slice(-10).reverse().map(u=>`<tr>
+    <td>${u.firstname} ${u.lastname}</td>
+    <td style="font-size:0.8rem">${u.email}</td>
+    <td>${fmtMoney(u.balance||0)} FCFA</td>
+    <td style="font-size:0.78rem;color:var(--gold)">${(u.plans||[]).map(p=>getPlans().find(x=>x.id===p)?.name||p).join(', ')||'—'}</td>
+    <td><span class="badge badge-${u.kyc==='verified'?'success':u.kyc==='submitted'?'pending':'danger'}">${u.kyc==='verified'?'✓ Vérifié':u.kyc==='submitted'?'En attente':'✗'}</span></td>
+  </tr>`).join('');
+  const aut=document.getElementById('adminAllUsers');
+  if(aut) aut.innerHTML=[...users].reverse().map(u=>`<tr>
+    <td>${u.firstname} ${u.lastname}</td>
+    <td style="font-size:0.78rem">${u.email}</td>
+    <td style="color:var(--gold)">${fmtMoney(u.balance||0)}</td>
+    <td style="color:var(--accent2)">${fmtMoney(computeDailyBonus(u))}</td>
+    <td>${(u.plans||[]).length||'—'}</td>
+    <td><span class="badge badge-${u.kyc==='verified'?'success':u.kyc==='submitted'?'pending':'danger'}">${u.kyc==='verified'?'✓':u.kyc==='submitted'?'Attente':'✗'}</span></td>
+    <td><div style="display:flex;gap:5px"><button class="btn btn-sm btn-gold" onclick="adminCreditUser('${u.id}')">+Crédit</button><button class="btn btn-sm btn-danger" onclick="adminDeleteUser('${u.id}')"><i class="fa fa-trash"></i></button></div></td>
+  </tr>`).join('');
+  const wt=document.getElementById('adminWithdrawalsTbody');
+  if(wt) wt.innerHTML=[...withdrawals].reverse().map(t=>{
+    const u=users.find(x=>x.id===t.userId)||{};
+    const np=(t.note||'').split('|').map(s=>s.trim());
+    const wN=np[0]||'—', wNum=np[1]||'—', wNm=np[2]||'—';
+    const isAdminW=t.status==='pending_admin_approval';
+    const currentAdminIdx=getCurrentAdminIndex();
+    const canApproveAdminW=isAdminW && currentAdminIdx !== t.requestedByAdmin;
+    let statusBadge='';
+    if(t.status==='approved') statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
+    else if(t.status==='pending') statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
+    else if(t.status==='pending_admin_approval') statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
+    else if(t.status==='processing') statusBadge='<span class="badge badge-pending">⚙️ Traitement LeekPay...</span>';
+    else if(t.status==='leekpay_failed') statusBadge='<span class="badge badge-danger">⚠️ Échec LeekPay</span>';
+    else statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
+    const userName=isAdminW ? `<strong style="color:var(--accent)">👑 Admin ${t.requestedByAdmin+1}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||''}</span>` : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
+    let actions='—';
+    if(t.status==='pending') actions=`<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>`;
+    else if(t.status==='pending_admin_approval') actions=canApproveAdminW ? `<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>` : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
+    else if(t.status==='leekpay_failed') actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer LeekPay</button>`;
+    return `<tr>
+      <td>${userName}</td>
+      <td style="color:var(--gold);font-weight:600">${fmtMoney(t.amount)} FCFA</td>
+      <td style="font-size:0.8rem"><span style="color:var(--accent2)">${wN}</span><br><span style="font-family:monospace">${wNum}</span><br><span style="color:var(--text-muted);font-size:0.74rem">${wNm}</span></td>
+      <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
+      <td>${statusBadge}${t.leekpayId?'<br><span style="font-size:0.68rem;color:var(--text-muted)">ID: '+t.leekpayId+'</span>':''}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+  const dt=document.getElementById('adminDepositsTbody');
+  if(dt) dt.innerHTML=[...deposits].reverse().map(t=>{
+    const u=users.find(x=>x.id===t.userId)||{};
+    const isLeekPay=t.note&&t.note.startsWith('LeekPay');
+    return `<tr>
+      <td>${u.firstname||'?'} ${u.lastname||''}</td>
+      <td style="color:var(--accent2)">${fmtMoney(t.amount)} FCFA</td>
+      <td style="font-size:0.78rem">${isLeekPay?'<span style="color:var(--gold)">⚡ LeekPay</span>':'Mobile Money'}</td>
+      <td style="font-size:0.76rem;color:var(--text-muted)">${t.leekpayId||t.note?.split('Réf: ')[1]||'—'}</td>
+      <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
+      <td><span class="badge badge-${t.status==='approved'?'success':t.status==='pending'?'pending':'danger'}">${t.status==='approved'?'✅ Crédité':t.status==='pending'?'⏳ En attente':'❌ Refusé'}</span></td>
+      <td>${t.status==='pending'?'<button class="btn btn-sm btn-green" onclick="approveDeposit(\''+t.id+'\')">✓ Créditer manuellement</button>':'—'}</td>
+    </tr>`;
+  }).join('');
+  const kt=document.getElementById('adminKycTbody');
+  if(kt){
+    const kp=users.filter(u=>u.kyc==='submitted');
+    kt.innerHTML=kp.length?kp.map(u=>`<tr>
+      <td>${u.firstname} ${u.lastname}<br><span style="font-size:0.76rem;color:var(--text-muted)">${u.email}</span></td>
+      <td>${u.kycData?.docType||'—'} | ${u.kycData?.docNumber||'—'}</td>
+      <td style="font-size:0.78rem">${u.kycData?.submittedAt?fmtDate(u.kycData.submittedAt):'—'}</td>
+      <td><div style="display:flex;gap:5px"><button class="btn btn-sm btn-green" onclick="approveKYC('${u.id}')">✓ Valider</button><button class="btn btn-sm btn-danger" onclick="rejectKYC('${u.id}')">✗ Refuser</button></div></td>
+    </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Aucun dossier en attente.</td></tr>';
+  }
+  renderAdminPlansTable(); loadPlanSelectOptions();
+  const ca=document.getElementById('currentAnnouncePreview');
+  if(ca){ const txt=getAnnounce(); ca.textContent=txt||'Aucune annonce active'; if(txt&&document.getElementById('announceInput')) document.getElementById('announceInput').value=txt; }
+}
+
+async function approveWithdrawal(txId){
+  const txs=getTransactions(); const idx=txs.findIndex(t=>t.id===txId); if(idx===-1) return;
+  const t=txs[idx];
+  const cu=getCurrentUser();
+
+  // Si c'est un retrait admin, vérifier qu'un AUTRE admin approuve
+  if(t.status==='pending_admin_approval'){
+    const approvingAdminIdx=getCurrentAdminIndex();
+    if(approvingAdminIdx === t.requestedByAdmin){
+      showToast('❌ Vous ne pouvez pas approuver votre propre demande de retrait. Un autre administrateur doit l\'approuver.','error');
+      return;
+    }
+    // Traitement du retrait admin — pas de déduction de solde utilisateur (admin)
+    txs[idx].status='processing'; txs[idx].approvedByAdmin=approvingAdminIdx; txs[idx].approvedAt=Date.now();
+    saveTransactions(txs); fbSaveTx({...txs[idx]});
+    const np=(t.note||'').split('|').map(s=>s.trim());
+    const wNetwork=np[0]||'', wPhone=np[1]||'', wName=np[2]||'';
+    showToast('⏳ Approbation admin enregistrée. Envoi LeekPay en cours...','info');
+    const leekResult=await leekPaySendPayment(t.id, t.amount, wNetwork, wPhone, wName, t.requestedByEmail||'', 'Admin IF');
+    const txs2=getTransactions(); const idx2=txs2.findIndex(x=>x.id===txId);
+    if(idx2!==-1){
+      txs2[idx2].status=leekResult.success?'approved':'leekpay_failed';
+      txs2[idx2].leekpayId=leekResult.leekpayId||null;
+      txs2[idx2].leekpayError=leekResult.error||null;
+      saveTransactions(txs2); fbSaveTx({...txs2[idx2]});
+    }
+    if(leekResult.success){
+      showToast('✅ Retrait admin de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement manuellement via Mobile Money.','success');
+    } else {
+      showToast('⚠️ Erreur lors de l\'approbation. Réessayez.','warning');
+    }
+    loadAdmin(); return;
+  }
+
+  // Retrait membre normal
+  const users=getUsers(); const uidx=users.findIndex(u=>u.id===t.userId);
+  if(uidx!==-1){
+    if((users[uidx].balance||0)<t.amount) return showToast('Solde utilisateur insuffisant !','error');
+    users[uidx].balance-=t.amount;
+    users[uidx].totalWithdrawn=(users[uidx].totalWithdrawn||0)+t.amount;
+    users[uidx].pendingBonus=Math.max(0,(users[uidx].pendingBonus||0)-t.amount);
+    saveUsers(users); fbSaveUser(users[uidx]);
+  }
+  txs[idx].status='processing'; saveTransactions(txs); fbSaveTx({...txs[idx],status:'processing'});
+  showToast('⏳ Retrait approuvé. Envoi LeekPay en cours...','info');
+  const np=(t.note||'').split('|').map(s=>s.trim());
+  const wNetwork=np[0]||'', wPhone=np[1]||'', wName=np[2]||'';
+  const userEmail=uidx!==-1?users[uidx].email:'';
+  const userName=uidx!==-1?(users[uidx].firstname+' '+users[uidx].lastname):'';
+  const leekResult=await leekPaySendPayment(t.id, t.amount, wNetwork, wPhone, wName, userEmail, userName);
+  const txs2=getTransactions(); const idx2=txs2.findIndex(x=>x.id===txId);
+  if(idx2!==-1){
+    txs2[idx2].status=leekResult.success?'approved':'leekpay_failed';
+    txs2[idx2].leekpayId=leekResult.leekpayId||null;
+    txs2[idx2].leekpayError=leekResult.error||null;
+    saveTransactions(txs2); fbSaveTx({...txs2[idx2]});
+  }
+  if(leekResult.success){
+    if(uidx!==-1){
+      const sent=await sendEmail('withdrawal_confirm',users[uidx].email,users[uidx].firstname+' '+users[uidx].lastname,{amount:fmtMoney(t.amount),method:np[0]||'—',txId:t.id,date:fmtDate(t.date)});
+      if(sent) console.log('[Email] Confirmation retrait envoyée');
+    }
+    showToast('✅ Retrait de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement via '+np[0]+' au '+np[1]+'.','success');
+  } else {
+    // Rembourser le solde si LeekPay a échoué
+    if(uidx!==-1){
+      const users3=getUsers(); const uidx3=users3.findIndex(u=>u.id===t.userId);
+      if(uidx3!==-1){ users3[uidx3].balance=(users3[uidx3].balance||0)+t.amount; users3[uidx3].totalWithdrawn=Math.max(0,(users3[uidx3].totalWithdrawn||0)-t.amount); saveUsers(users3); fbSaveUser(users3[uidx3]); }
+    }
+    showToast('⚠️ Erreur LeekPay : '+leekResult.error+'. Le solde a été remboursé. Vérifiez votre compte LeekPay.','warning');
+  }
+  loadAdmin();
+}
+function rejectWithdrawal(txId){
+  const txs=getTransactions(); const idx=txs.findIndex(t=>t.id===txId); if(idx===-1) return;
+  txs[idx].status='rejected'; saveTransactions(txs); fbSaveTx({...txs[idx],status:'rejected'});
+  showToast('Retrait refusé.','info'); loadAdmin();
+}
+function approveDeposit(txId){
+  // Approbation manuelle (si LeekPay webhook n'a pas encore crédité)
+  const txs=getTransactions(); const idx=txs.findIndex(t=>t.id===txId); if(idx===-1) return;
+  const t=txs[idx]; const users=getUsers(); const uidx=users.findIndex(u=>u.id===t.userId);
+  if(uidx!==-1){ users[uidx].balance=(users[uidx].balance||0)+t.amount; saveUsers(users); fbSaveUser(users[uidx]); }
+  txs[idx].status='approved'; saveTransactions(txs); fbSaveTx({...txs[idx],status:'approved'});
+  showToast('Dépôt de '+fmtMoney(t.amount)+' FCFA approuvé manuellement.','success'); loadAdmin();
+}
+function approveKYC(userId){
+  const users=getUsers(); const idx=users.findIndex(u=>u.id===userId); if(idx===-1) return;
+  users[idx].kyc='verified'; saveUsers(users); fbSaveUser(users[idx]);
+  showToast('KYC approuvé.','success'); loadAdmin();
+}
+function rejectKYC(userId){
+  const users=getUsers(); const idx=users.findIndex(u=>u.id===userId); if(idx===-1) return;
+  users[idx].kyc='email_verified'; saveUsers(users); fbSaveUser(users[idx]);
+  showToast('KYC refusé.','info'); loadAdmin();
+}
+function adminCreditUser(userId){
+  const amt=parseInt(prompt('Montant à créditer (FCFA):')); if(!amt||amt<=0) return;
+  const users=getUsers(); const idx=users.findIndex(u=>u.id===userId); if(idx===-1) return;
+  users[idx].balance=(users[idx].balance||0)+amt; saveUsers(users); fbSaveUser(users[idx]);
+  addTransaction(userId,'deposit',amt,'approved','Crédit admin');
+  showToast(fmtMoney(amt)+' FCFA crédité.','success'); loadAdmin();
+}
+function adminDeleteUser(userId){
+  if(!confirm('Supprimer cet utilisateur ? Action irréversible.')) return;
+  const users=getUsers().filter(u=>u.id!==userId); saveUsers(users);
+  showToast('Utilisateur supprimé.','info'); loadAdmin();
+}
+function switchAdminTab(name,el){
+  document.querySelectorAll('#admin .tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#admin .nav-item').forEach(i=>i.classList.remove('active'));
+  const s=document.getElementById('tab-'+name); if(s) s.classList.add('active');
+  if(el) el.classList.add('active');
+  if(name==='adminPlans'){ renderAdminPlansTable(); loadPlanSelectOptions(); }
+  if(name==='adminAnnounce'){ const txt=getAnnounce(); const p=document.getElementById('currentAnnouncePreview'); if(p) p.textContent=txt||'Aucune annonce active'; if(txt&&document.getElementById('announceInput')) document.getElementById('announceInput').value=txt; }
+}
+function toggleAdminSidebar(){ document.getElementById('adminSidebar').classList.toggle('open'); }
+  // ── Admin Plans ──
+function renderAdminPlansTable(){
+  const plans=getPlans();
+  const tbody=document.getElementById('adminPlansTbody'); if(!tbody) return;
+  tbody.innerHTML=plans.map(p=>`<tr>
+    <td>${p.icon||''} ${p.name}</td>
+    <td style="color:var(--gold)">${fmtMoney(p.price)} FCFA</td>
+    <td style="color:var(--accent2)">+${fmtMoney(p.daily)} FCFA/j</td>
+    <td style="font-size:0.78rem;color:var(--text-muted)">${p.desc||'—'}</td>
+    <td><div style="display:flex;gap:5px">
+      <button class="btn btn-sm btn-outline" onclick="editPlan('${p.id}')"><i class="fa fa-edit"></i></button>
+      <button class="btn btn-sm btn-danger" onclick="deletePlan('${p.id}')"><i class="fa fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+function loadPlanSelectOptions(){
+  const sel=document.getElementById('editPlanSelect'); if(!sel) return;
+  const plans=getPlans(); const cur=sel.value;
+  sel.innerHTML='<option value="">— Nouvelle parcelle —</option>'+plans.map(p=>`<option value="${p.id}">${p.icon||''} ${p.name}</option>`).join('');
+  sel.value=cur;
+}
+function loadPlanForEdit(){
+  const id=document.getElementById('editPlanSelect').value;
+  if(!id){ resetPlanForm(); return; }
+  const p=getPlans().find(x=>x.id===id); if(!p) return;
+  document.getElementById('planFormName').value=p.name;
+  document.getElementById('planFormPrice').value=p.price;
+  document.getElementById('planFormDaily').value=p.daily;
+  document.getElementById('planFormIcon').value=p.icon||'';
+  document.getElementById('planFormDesc').value=p.desc||'';
+  document.getElementById('deletePlanBtn').style.display='inline-flex';
+}
+function resetPlanForm(){
+  document.getElementById('editPlanSelect').value='';
+  document.getElementById('planFormName').value='';
+  document.getElementById('planFormPrice').value='';
+  document.getElementById('planFormDaily').value='';
+  document.getElementById('planFormIcon').value='';
+  document.getElementById('planFormDesc').value='';
+  document.getElementById('deletePlanBtn').style.display='none';
+}
+function savePlanForm(){
+  const name=document.getElementById('planFormName').value.trim();
+  const price=parseInt(document.getElementById('planFormPrice').value);
+  const daily=parseInt(document.getElementById('planFormDaily').value);
+  const icon=document.getElementById('planFormIcon').value.trim();
+  const desc=document.getElementById('planFormDesc').value.trim();
+  if(!name) return showAlert('planFormAlert','Le nom est requis.');
+  if(!price||price<=0) return showAlert('planFormAlert','Prix invalide.');
+  if(!daily||daily<=0) return showAlert('planFormAlert','Bonus quotidien invalide.');
+  const plans=getPlans();
+  const editId=document.getElementById('editPlanSelect').value;
+  if(editId){
+    const idx=plans.findIndex(p=>p.id===editId);
+    if(idx!==-1) plans[idx]={...plans[idx],name,price,daily,icon,desc};
+    showToast('Parcelle modifiée !','success');
+  } else {
+    const newId=name.toLowerCase().replace(/\s+/g,'_')+'_'+genId().substr(0,4);
+    plans.push({id:newId,name,price,daily,icon,desc});
+    showToast('Nouvelle parcelle ajoutée !','success');
+  }
+  savePlans(plans); fbSavePlans(plans);
+  renderAdminPlansTable(); loadPlanSelectOptions(); renderLandingPlans(); resetPlanForm();
+}
+function editPlan(id){
+  const sel=document.getElementById('editPlanSelect'); if(sel){ sel.value=id; loadPlanForEdit(); }
+  switchAdminTab('adminPlans',null);
+}
+function deletePlan(id){
+  if(!confirm('Supprimer cette parcelle ?')) return;
+  const plans=getPlans().filter(p=>p.id!==id); savePlans(plans); fbSavePlans(plans);
+  renderAdminPlansTable(); loadPlanSelectOptions(); renderLandingPlans(); resetPlanForm();
+  showToast('Parcelle supprimée.','info');
+}
+function deletePlanFromForm(){
+  const id=document.getElementById('editPlanSelect').value; if(!id) return;
+  deletePlan(id);
+}
+
+// ── Init ──
+// Configurer les callbacks LeekPay dès que le script est prêt
+window.addEventListener('load', function(){
+  if(typeof LeekPay !== 'undefined' && LeekPay.configure){
+    LeekPay.configure({
+      onSuccess: function(data){ if(window.leekpayOnSuccess) window.leekpayOnSuccess(data); },
+      onCancel:  function(){     if(window.leekpayOnCancel)  window.leekpayOnCancel(); }
+    });
+  }
+});
+(function init(){
+  if(!localStorage.getItem('IF_plans')) savePlans(DEFAULT_PLANS);
+  if(!getUsers().length){
+    const demo={id:'demo01',firstname:'Marie',lastname:'Dupont',email:'demo@if.com',phone:'+229 91234567',country:'Bénin',password:'demo123',refCode:'IF-DEMO0001',balance:15000,totalWithdrawn:3000,plans:['parcelle','secondaire'],kyc:'verified',emailVerified:true,referrals:[],affiliateBonus:1000,createdAt:Date.now()-30*86400000,role:'user',lastBonusDate:null,pendingBonus:1960};
+    saveUsers([demo]);
+    addTransaction('demo01','deposit',20000,'approved','Dépôt initial via MTN MoMo');
+    addTransaction('demo01','purchase',3100,'approved','Achat: Parcelle');
+    addTransaction('demo01','purchase',9500,'approved','Achat: Parcelle Secondaire');
+    addTransaction('demo01','withdrawal',3000,'approved','MTN MoMo | +22901XXXXXX | Marie Dupont');
+    addTransaction('demo01','bonus',1960,'approved','Bonus quotidien automatique');
+  }
+  const doFbSync=()=>{ fbLoadAll().then(()=>{ renderLandingPlans(); loadAnnounce();
+    const cu=getCurrentUser(); if(cu){ if(cu.role==='admin') loadAdmin(); else if(cu.emailVerified) loadDashboard(); }
+  }); };
+  if(window._firebaseReady){ doFbSync(); }
+  else { document.addEventListener('firebaseReady',doFbSync,{once:true}); setTimeout(doFbSync,3000); }
+  const urlParams=new URLSearchParams(window.location.search);
+  const refParam=urlParams.get('ref');
+  if(refParam){ const ri=document.getElementById('regReferral'); if(ri) ri.value=refParam; }
+  const cu=getCurrentUser();
+  if(cu){
+    if(cu.role==='admin'){ loadAdmin(); showPage('admin'); stopMoneyRain(); }
+    else if(cu.emailVerified){ loadDashboard(); showPage('dashboard'); stopMoneyRain(); }
+    else openModal('emailVerifyModal');
+  } else {
+    startMoneyRain();
+  }
+  renderLandingPlans();
+  loadAnnounce();
+})();
+</script>
+</body>
+</html>
