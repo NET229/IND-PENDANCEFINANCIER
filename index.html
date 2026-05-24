@@ -809,36 +809,69 @@ async function leekPaySendPayment(txId, amount, network, phoneNumber, holderName
 }
 
 // ── Storage ──
+// ================================================================
+// STORAGE — Firebase = source principale, localStorage = cache
+// ================================================================
+
+// ── Cache local (lecture rapide) ──
 function getPlans(){ const p=localStorage.getItem('IF_plans'); return p?JSON.parse(p):DEFAULT_PLANS; }
-function savePlans(p){ localStorage.setItem('IF_plans',JSON.stringify(p)); }
 function getUsers(){ return JSON.parse(localStorage.getItem('IF_users')||'[]'); }
-function saveUsers(u){ localStorage.setItem('IF_users',JSON.stringify(u)); }
 function getTransactions(){ return JSON.parse(localStorage.getItem('IF_transactions')||'[]'); }
-function saveTransactions(t){ localStorage.setItem('IF_transactions',JSON.stringify(t)); }
 function getCurrentUser(){ const e=sessionStorage.getItem('IF_currentUser'); return e?JSON.parse(e):null; }
 function setCurrentUser(u){ sessionStorage.setItem('IF_currentUser',JSON.stringify(u)); }
 function getAnnounce(){ return localStorage.getItem('IF_announce')||''; }
-function saveAnnounce(t){ localStorage.setItem('IF_announce',t); }
 
-// ── Firebase Sync ──
+// ── Écriture : localStorage + Firebase simultanément ──
+function savePlans(p){
+  localStorage.setItem('IF_plans',JSON.stringify(p));
+  fbSavePlans(p).catch(()=>{});
+}
+function saveUsers(u){
+  localStorage.setItem('IF_users',JSON.stringify(u));
+  // Sync individuelle via fbSaveUser() appelée explicitement pour chaque user modifié
+}
+function saveTransactions(t){
+  localStorage.setItem('IF_transactions',JSON.stringify(t));
+  // Sync individuelle via fbSaveTx() appelée explicitement pour chaque tx modifiée
+}
+function saveAnnounce(t){
+  localStorage.setItem('IF_announce',t);
+  if(window._db){
+    const {doc,setDoc}=window._fsHelpers;
+    setDoc(doc(window._db,'config','announce'),{text:t},{merge:true}).catch(()=>{});
+  }
+}
+
+// ── Firebase : écriture ──
 async function fbSaveUser(u){
-  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'users',u.id),u); }
-  catch(e){ console.warn('[FB] saveUser:',e.message); }
+  try{
+    if(!window._db||!u?.id) return;
+    const {doc,setDoc}=window._fsHelpers;
+    await setDoc(doc(window._db,'users',u.id),u,{merge:true});
+  }catch(e){ console.warn('[FB] saveUser:',e.message); }
 }
 async function fbSaveTx(tx){
-  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'transactions',tx.id),tx); }
-  catch(e){ console.warn('[FB] saveTx:',e.message); }
+  try{
+    if(!window._db||!tx?.id) return;
+    const {doc,setDoc}=window._fsHelpers;
+    await setDoc(doc(window._db,'transactions',tx.id),tx,{merge:true});
+  }catch(e){ console.warn('[FB] saveTx:',e.message); }
 }
 async function fbSavePlans(plans){
-  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'config','plans'),{plans}); }
-  catch(e){ console.warn('[FB] savePlans:',e.message); }
+  try{
+    if(!window._db) return;
+    const {doc,setDoc}=window._fsHelpers;
+    await setDoc(doc(window._db,'config','plans'),{plans},{merge:true});
+  }catch(e){ console.warn('[FB] savePlans:',e.message); }
 }
+
+// ── Firebase : lecture complète (au démarrage) ──
 async function fbLoadAll(){
   try{
     if(!window._db) return;
     const {collection,getDocs,doc,getDoc}=window._fsHelpers;
 
-    // ── Utilisateurs ──
+    // Utilisateurs — Firebase gagne sur le cache local
     const uSnap=await getDocs(collection(window._db,'users'));
     if(!uSnap.empty){
       const fbUsers=[]; uSnap.forEach(d=>fbUsers.push(d.data()));
@@ -848,30 +881,89 @@ async function fbLoadAll(){
         if(lidx===-1){ merged.push(fu); }
         else{
           const lu=merged[lidx];
-          if(!lu.emailVerified&&lu.emailVerifyCode){ return; }
+          // Préserver le code de vérification email en cours
+          if(!lu.emailVerified&&lu.emailVerifyCode) return;
           merged[lidx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
         }
       });
-      saveUsers(merged);
+      localStorage.setItem('IF_users',JSON.stringify(merged));
     }
 
-    // ── Transactions — Firebase est LA SOURCE DE VÉRITÉ ──
+    // Transactions — Firebase écrase TOUJOURS le cache local
     const tSnap=await getDocs(collection(window._db,'transactions'));
     if(!tSnap.empty){
       const fbTxs=[]; tSnap.forEach(d=>fbTxs.push(d.data()));
       const local=getTransactions(); const merged=[...local];
       fbTxs.forEach(ft=>{
         const idx=merged.findIndex(t=>t.id===ft.id);
-        if(idx===-1) merged.push(ft);        // nouvelle → ajouter
-        else merged[idx]={...merged[idx],...ft}; // existante → Firebase écrase le local
+        if(idx===-1) merged.push(ft);
+        else merged[idx]={...merged[idx],...ft}; // Firebase gagne
       });
-      saveTransactions(merged);
+      localStorage.setItem('IF_transactions',JSON.stringify(merged));
     }
 
+    // Plans
     const pSnap=await getDoc(doc(window._db,'config','plans'));
-    if(pSnap.exists()&&pSnap.data().plans){ savePlans(pSnap.data().plans); }
-    console.log('[Firebase] Sync OK');
-  } catch(e){ console.warn('[FB] loadAll:',e.message); }
+    if(pSnap.exists()&&pSnap.data().plans){
+      localStorage.setItem('IF_plans',JSON.stringify(pSnap.data().plans));
+    }
+
+    // Annonce
+    const aSnap=await getDoc(doc(window._db,'config','announce'));
+    if(aSnap.exists()&&aSnap.data().text){
+      localStorage.setItem('IF_announce',aSnap.data().text);
+    }
+
+    console.log('[Firebase] ✅ Chargement complet OK');
+  }catch(e){ console.warn('[FB] loadAll:',e.message); }
+}
+
+// ── Firebase : écoute temps réel (onSnapshot) ──
+function startRealtimeSync(){
+  if(!window._db){ console.warn('[RT] Firebase non prêt'); return; }
+  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+    .then(({onSnapshot,collection})=>{
+
+      // Transactions temps réel
+      onSnapshot(collection(window._db,'transactions'), snap=>{
+        const fbTxs=[]; snap.forEach(d=>fbTxs.push(d.data()));
+        const local=getTransactions(); const merged=[...local];
+        fbTxs.forEach(ft=>{
+          const idx=merged.findIndex(t=>t.id===ft.id);
+          if(idx===-1) merged.push(ft);
+          else merged[idx]={...merged[idx],...ft};
+        });
+        localStorage.setItem('IF_transactions',JSON.stringify(merged));
+        // Rafraîchir panneau admin en temps réel
+        const cu=getCurrentUser();
+        if(cu&&cu.role==='admin'){
+          const wt=document.getElementById('adminWithdrawalsTbody');
+          if(wt) loadAdmin();
+        }
+        console.log('[RT] Transactions mises à jour depuis Firebase');
+      });
+
+      // Utilisateurs temps réel
+      onSnapshot(collection(window._db,'users'), snap=>{
+        const fbUsers=[]; snap.forEach(d=>fbUsers.push(d.data()));
+        const local=getUsers(); const merged=[...local];
+        fbUsers.forEach(fu=>{
+          const idx=merged.findIndex(u=>u.id===fu.id);
+          if(idx===-1) merged.push(fu);
+          else{
+            const lu=merged[idx];
+            if(!lu.emailVerified&&lu.emailVerifyCode) return;
+            merged[idx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+          }
+        });
+        localStorage.setItem('IF_users',JSON.stringify(merged));
+        const cu=getCurrentUser();
+        if(cu&&cu.role==='admin') loadAdmin();
+        console.log('[RT] Utilisateurs mis à jour depuis Firebase');
+      });
+
+      console.log('[Firebase] ✅ Écoute temps réel active');
+    }).catch(e=>console.warn('[RT] Erreur:',e.message));
 }
 
 // ── Utils ──
@@ -1837,6 +1929,8 @@ window.addEventListener('load', function(){
     // Recharger le panneau APRÈS que Firebase ait livré toutes les données
     const cu=getCurrentUser();
     if(cu){ if(cu.role==='admin') loadAdmin(); else if(cu.emailVerified) loadDashboard(); }
+    // Démarrer l'écoute temps réel après le chargement initial
+    startRealtimeSync();
   }); };
   if(window._firebaseReady){ doFbSync(); }
   else { document.addEventListener('firebaseReady',doFbSync,{once:true}); setTimeout(doFbSync,3000); }
@@ -2762,72 +2856,11 @@ window.loadAdmin = function(){
   }, 200);
 };
 </script>
-<!-- ========== TEMPS RÉEL FIREBASE (onSnapshot) ========== -->
+<!-- ========== DÉMARRAGE TEMPS RÉEL ========== -->
 <script>
-(function(){
-  function startRealtimeSync(){
-    if(!window._db) return;
-    try{
-      // Importer onSnapshot dynamiquement
-      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').then(({onSnapshot,collection})=>{
-
-        // ── Écoute temps réel des TRANSACTIONS ──
-        onSnapshot(collection(window._db,'transactions'), snapshot=>{
-          const fbTxs=[];
-          snapshot.forEach(d=>fbTxs.push(d.data()));
-          // Fusionner — Firebase gagne toujours
-          const local=getTransactions(); const merged=[...local];
-          fbTxs.forEach(ft=>{
-            const idx=merged.findIndex(t=>t.id===ft.id);
-            if(idx===-1) merged.push(ft);
-            else merged[idx]={...merged[idx],...ft};
-          });
-          saveTransactions(merged);
-
-          // Rafraîchir panneau admin automatiquement
-          const cu=getCurrentUser();
-          if(cu&&cu.role==='admin'){
-            // Recharger le tableau des retraits sans recharger toute la page
-            loadAdmin();
-            // Badge retraits en attente
-            const pending=merged.filter(t=>
-              t.type==='withdrawal'&&
-              (t.status==='pending'||t.status==='pending_admin_approval')
-            ).length;
-            const dot=document.getElementById('withdrawNotif');
-            if(dot){ dot.style.display=pending>0?'inline-block':'none'; dot.textContent=pending>0?pending:''; }
-          }
-        });
-
-        // ── Écoute temps réel des UTILISATEURS ──
-        onSnapshot(collection(window._db,'users'), snapshot=>{
-          const fbUsers=[];
-          snapshot.forEach(d=>fbUsers.push(d.data()));
-          const local=getUsers(); const merged=[...local];
-          fbUsers.forEach(fu=>{
-            const idx=merged.findIndex(u=>u.id===fu.id);
-            if(idx===-1) merged.push(fu);
-            else{
-              const lu=merged[idx];
-              if(!lu.emailVerified&&lu.emailVerifyCode) return;
-              merged[idx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
-            }
-          });
-          saveUsers(merged);
-          // Rafraîchir panneau admin
-          const cu=getCurrentUser();
-          if(cu&&cu.role==='admin') loadAdmin();
-        });
-
-        console.log('[Realtime] Écoute Firebase active ✅');
-      }).catch(e=>console.warn('[Realtime]',e.message));
-    }catch(e){ console.warn('[Realtime] init:',e.message); }
-  }
-
-  // Démarrer dès que Firebase est prêt
-  if(window._firebaseReady) startRealtimeSync();
-  else document.addEventListener('firebaseReady',startRealtimeSync,{once:true});
-})();
+// Démarrer l'écoute temps réel Firebase dès que prêt
+if(window._firebaseReady) startRealtimeSync();
+else document.addEventListener('firebaseReady', startRealtimeSync, {once:true});
 </script>
 <!-- ========== FIN TEMPS RÉEL ========== -->
 </body>
