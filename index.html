@@ -2687,5 +2687,89 @@ Tu es utile, concis et bienveillant. Évite les réponses trop longues.`
 })();
 </script>
 <!-- ========== FIN JOHN CHAT ========== -->
+  <!-- ========== FIX RETRAIT ADMIN VISIBLE ========== -->
+<script>
+const _origLoadAdmin_fix = window.loadAdmin;
+window.loadAdmin = function(){
+  if(_origLoadAdmin_fix) _origLoadAdmin_fix();
+
+  // Re-rendre le tableau des retraits avec TOUS les utilisateurs (admins inclus)
+  setTimeout(()=>{
+    const allUsers = getUsers(); // Sans filtre — inclut les admins
+    const txs = getTransactions();
+    const withdrawals = txs.filter(t => t.type === 'withdrawal');
+    const cu = getCurrentUser();
+    const currentAdminIdx = getCurrentAdminIndex();
+
+    const wt = document.getElementById('adminWithdrawalsTbody');
+    if(!wt) return;
+
+    wt.innerHTML = [...withdrawals].reverse().map(t => {
+      // Chercher dans TOUS les users (admins inclus)
+      const u = allUsers.find(x => x.id === t.userId) || {};
+      const np = (t.note||'').split('|').map(s=>s.trim());
+      const wN=np[0]||'—', wNum=np[1]||'—', wNm=np[2]||'—';
+
+      const isAdminW = t.status==='pending_admin_approval' ||
+                       (u.role==='admin' && t.status==='pending');
+      const canApprove = isAdminW && currentAdminIdx !== t.requestedByAdmin &&
+                         currentAdminIdx !== allUsers.findIndex(x=>x.id===t.userId);
+
+      let statusBadge = '';
+      if(t.status==='approved')
+        statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
+      else if(t.status==='pending' && !isAdminW)
+        statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
+      else if(isAdminW && t.status!=='approved')
+        statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
+      else if(t.status==='processing')
+        statusBadge='<span class="badge badge-pending">⚙️ En cours...</span>';
+      else if(t.status==='leekpay_failed')
+        statusBadge='<span class="badge badge-danger">⚠️ Échec paiement</span>';
+      else
+        statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
+
+      // Nom affiché — admin ou membre
+      const isAdminUser = u.role==='admin' || t.requestedByAdmin !== undefined;
+      const adminLabel  = t.requestedByAdmin !== undefined
+        ? 'Admin '+(t.requestedByAdmin+1)
+        : (u.role==='admin' ? 'Admin' : null);
+      const userName = adminLabel
+        ? `<strong style="color:var(--accent)">👑 ${adminLabel}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||u.email||''}</span>`
+        : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
+
+      let actions = '—';
+      if(t.status==='pending' && !isAdminW)
+        actions=`<div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
+          <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
+        </div>`;
+      else if(isAdminW && (t.status==='pending'||t.status==='pending_admin_approval'))
+        actions = canApprove
+          ? `<div style="display:flex;gap:5px;flex-wrap:wrap">
+               <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
+               <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
+             </div>`
+          : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
+      else if(t.status==='leekpay_failed')
+        actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer</button>`;
+
+      return `<tr>
+        <td>${userName}</td>
+        <td style="color:var(--gold);font-weight:600">${fmtMoney(t.amount)} FCFA</td>
+        <td style="font-size:0.8rem">
+          <span style="color:var(--accent2)">${wN}</span><br>
+          <span style="font-family:monospace">${wNum}</span><br>
+          <span style="color:var(--text-muted);font-size:0.74rem">${wNm}</span>
+        </td>
+        <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
+        <td>${statusBadge}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('');
+  }, 200);
+};
+</script>
+<!-- ========== FIN FIX RETRAIT ADMIN ========== -->
 </body>
 </html>
