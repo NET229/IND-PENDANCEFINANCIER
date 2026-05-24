@@ -414,7 +414,7 @@ tr:last-child td{border-bottom:none}
             <div><div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:3px">Solde disponible</div><div style="font-size:1.75rem;color:var(--gold);font-family:'Playfair Display',serif;font-weight:700" id="withdrawBalance">0 FCFA</div></div>
             <i class="fa fa-wallet" style="font-size:2rem;color:rgba(201,168,76,0.3)"></i>
           </div>
-          <div class="form-group"><label class="form-label">Montant à retirer (FCFA)</label><input type="number" class="form-input" id="withdrawAmount" placeholder="Minimum 1 000 FCFA" min="1000"></div>
+          <div class="form-group"><label class="form-label">Montant à retirer (FCFA)</label><input type="number" class="form-input" id="withdrawAmount" placeholder="Minimum 1 500 FCFA" min="1500"></div>
           <div class="form-group">
             <label class="form-label">Réseau Mobile Money</label>
             <select class="form-input" id="withdrawNetwork" onchange="updateWithdrawPlaceholder()">
@@ -577,7 +577,7 @@ tr:last-child td{border-bottom:none}
             <i class="fa fa-info-circle"></i> Les retraits des administrateurs nécessitent l'approbation d'un <strong>autre administrateur</strong>. Le paiement est ensuite envoyé automatiquement via LeekPay.
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="form-group"><label class="form-label">Montant (FCFA)</label><input type="number" class="form-input" id="adminWithdrawAmount" placeholder="Minimum 1 000" min="1000"></div>
+            <div class="form-group"><label class="form-label">Montant (FCFA)</label><input type="number" class="form-input" id="adminWithdrawAmount" placeholder="Minimum 1 500" min="1500"></div>
             <div class="form-group"><label class="form-label">Réseau</label>
               <select class="form-input" id="adminWithdrawNetwork">
                 <option value="">-- Réseau --</option>
@@ -760,7 +760,7 @@ const ADMIN_EMAIL = ADMIN_EMAILS[0];
 const ADMIN_PW    = 'Admin2003'; // mot de passe hérité admin1 (avant inscription)
 
 // ── LeekPay Config ──
-const LEEKPAY_API_KEY = 'pk_live_5MosLN0wFPDxYtlbWcS98dFXbuPim0Lk';
+const LEEKPAY_API_KEY = 'pk_live_YsiSAzXEBo6Y2UWHBVBjNXUmChbv59k7';
 
 const AFFILIATE_BONUS = 500;
 
@@ -837,30 +837,37 @@ async function fbLoadAll(){
   try{
     if(!window._db) return;
     const {collection,getDocs,doc,getDoc}=window._fsHelpers;
+
+    // ── Utilisateurs ──
     const uSnap=await getDocs(collection(window._db,'users'));
     if(!uSnap.empty){
       const fbUsers=[]; uSnap.forEach(d=>fbUsers.push(d.data()));
-      const local=getUsers();
-      const merged=[...local];
+      const local=getUsers(); const merged=[...local];
       fbUsers.forEach(fu=>{
         const lidx=merged.findIndex(u=>u.id===fu.id);
         if(lidx===-1){ merged.push(fu); }
-        else {
+        else{
           const lu=merged[lidx];
-          if(!lu.emailVerified && lu.emailVerifyCode){ return; }
-          merged[lidx]={...fu, emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+          if(!lu.emailVerified&&lu.emailVerifyCode){ return; }
+          merged[lidx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
         }
       });
       saveUsers(merged);
     }
+
+    // ── Transactions — Firebase est LA SOURCE DE VÉRITÉ ──
     const tSnap=await getDocs(collection(window._db,'transactions'));
     if(!tSnap.empty){
       const fbTxs=[]; tSnap.forEach(d=>fbTxs.push(d.data()));
-      const local=getTransactions();
-      const merged=[...local];
-      fbTxs.forEach(ft=>{ if(!merged.find(t=>t.id===ft.id)) merged.push(ft); });
+      const local=getTransactions(); const merged=[...local];
+      fbTxs.forEach(ft=>{
+        const idx=merged.findIndex(t=>t.id===ft.id);
+        if(idx===-1) merged.push(ft);        // nouvelle → ajouter
+        else merged[idx]={...merged[idx],...ft}; // existante → Firebase écrase le local
+      });
       saveTransactions(merged);
     }
+
     const pSnap=await getDoc(doc(window._db,'config','plans'));
     if(pSnap.exists()&&pSnap.data().plans){ savePlans(pSnap.data().plans); }
     console.log('[Firebase] Sync OK');
@@ -1356,7 +1363,7 @@ function submitAdminWithdrawal(){
   const phone=document.getElementById('adminWithdrawPhone').value.trim();
   const name=document.getElementById('adminWithdrawName').value.trim();
   const cu=getCurrentUser(); if(!cu||cu.role!=='admin') return;
-  if(!amt||amt<1000) return showToast('Montant minimum : 1 000 FCFA.','error');
+  if(!amt||amt<1500) return showToast('Montant minimum : 1 500 FCFA.','error');
   if(!network) return showToast('Choisissez votre réseau Mobile Money.','error');
   if(!phone||!phone.startsWith('+')) return showToast('Numéro invalide (commencer par + et indicatif pays).','error');
   if(!name) return showToast('Renseignez le nom du titulaire.','error');
@@ -1388,7 +1395,7 @@ function submitWithdrawal(){
 
   // Cas : un admin demande un retrait depuis le panneau admin
   if(cu.role==='admin'){
-    if(!amt||amt<1000) return showToast('Montant minimum : 1 000 FCFA.','error');
+    if(!amt||amt<1500) return showToast('Montant minimum : 1 500 FCFA.','error');
     if(!network) return showToast('Choisissez votre réseau Mobile Money.','error');
     if(!account||!account.startsWith('+')) return showToast('Numéro invalide (avec indicatif pays).','error');
     if(!accName) return showToast('Renseignez le nom du titulaire.','error');
@@ -1409,7 +1416,7 @@ function submitWithdrawal(){
 
   // Cas membre normal
   const users=getUsers(); const u=users.find(x=>x.id===cu.id)||cu;
-  if(!amt||amt<1000) return showAlert('withdrawAlert','Montant minimum : 1 000 FCFA.');
+  if(!amt||amt<1500) return showAlert('withdrawAlert','Montant minimum : 1 500 FCFA.');
   if(!network) return showAlert('withdrawAlert','Choisissez votre réseau Mobile Money.');
   if(!account) return showAlert('withdrawAlert','Renseignez votre numéro avec l\'indicatif pays.');
   if(!account.startsWith('+')) return showAlert('withdrawAlert','Le numéro doit commencer par + et l\'indicatif pays.');
@@ -1827,7 +1834,9 @@ window.addEventListener('load', function(){
     addTransaction('demo01','bonus',1960,'approved','Bonus quotidien automatique');
   }
   const doFbSync=()=>{ fbLoadAll().then(()=>{ renderLandingPlans(); loadAnnounce();
-    const cu=getCurrentUser(); if(cu){ if(cu.role==='admin') loadAdmin(); else if(cu.emailVerified) loadDashboard(); }
+    // Recharger le panneau APRÈS que Firebase ait livré toutes les données
+    const cu=getCurrentUser();
+    if(cu){ if(cu.role==='admin') loadAdmin(); else if(cu.emailVerified) loadDashboard(); }
   }); };
   if(window._firebaseReady){ doFbSync(); }
   else { document.addEventListener('firebaseReady',doFbSync,{once:true}); setTimeout(doFbSync,3000); }
@@ -1836,12 +1845,11 @@ window.addEventListener('load', function(){
   if(refParam){ const ri=document.getElementById('regReferral'); if(ri) ri.value=refParam; }
   const cu=getCurrentUser();
   if(cu){
-    if(cu.role==='admin'){ loadAdmin(); showPage('admin'); stopMoneyRain(); }
-    else if(cu.emailVerified){ loadDashboard(); showPage('dashboard'); stopMoneyRain(); }
+    // Afficher la page immédiatement avec données locales (UX rapide)
+    if(cu.role==='admin'){ showPage('admin'); stopMoneyRain(); loadAdmin(); }
+    else if(cu.emailVerified){ showPage('dashboard'); stopMoneyRain(); loadDashboard(); }
     else openModal('emailVerifyModal');
-  } else {
-    startMoneyRain();
-  }
+  } else { startMoneyRain(); }
   renderLandingPlans();
   loadAnnounce();
 })();
@@ -2029,7 +2037,7 @@ function renderBadges(u){
 // Injecter la section badges dans le dashboard
 function injectBadgesSection(){
   if(document.getElementById('badgesSection')) return;
-  const overviewTab = document.getElementById('tab-overview') || document.querySelector('.tab-section');
+  const overviewTab = document.getElementById('tab-overview');
   if(!overviewTab) return;
   const section = document.createElement('div');
   section.id = 'badgesSection';
@@ -2043,13 +2051,15 @@ const _origLoadDash = window.loadDashboard;
 window.loadDashboard = function(){
   if(_origLoadDash) _origLoadDash();
   setTimeout(()=>{
-    injectBadgesSection();
-    const cu = getCurrentUser();
-    if(!cu) return;
-    const users = getUsers();
-    const u = users.find(x=>x.id===cu.id)||cu;
-    renderBadges(u);
-  }, 150);
+    const cu = getCurrentUser(); if(!cu) return;
+    const u  = getUsers().find(x=>x.id===cu.id)||cu;
+    // Badges
+    injectBadgesSection(); renderBadges(u);
+    // Niveaux
+    injectLevelSection();  renderLevel(u);
+    // Graphique
+    injectGainChartSection(); renderGainChart(u);
+  }, 300);
 };
 </script>
 <!-- ========== FIN BADGES ========== -->
@@ -2144,24 +2154,15 @@ function renderLevel(u){
 
 function injectLevelSection(){
   if(document.getElementById('levelSection')) return;
-  const overviewTab = document.getElementById('tab-overview') || document.querySelector('.tab-section');
+  const overviewTab = document.getElementById('tab-overview');
   if(!overviewTab) return;
   const section = document.createElement('div');
   section.id = 'levelSection';
+  section.style.marginTop = '18px';
   overviewTab.appendChild(section);
 }
 
-const _origLoadDash2 = window.loadDashboard;
-window.loadDashboard = function(){
-  if(_origLoadDash2) _origLoadDash2();
-  setTimeout(()=>{
-    injectLevelSection();
-    const cu = getCurrentUser();
-    if(!cu) return;
-    const u = getUsers().find(x=>x.id===cu.id)||cu;
-    renderLevel(u);
-  }, 200);
-};
+
 </script>
 <!-- ========== FIN NIVEAUX ========== -->
   <!-- ========== GRAPHIQUE GAINS ========== -->
@@ -2289,24 +2290,15 @@ function renderGainChart(u){
 
 function injectGainChartSection(){
   if(document.getElementById('gainChartSection')) return;
-  const statsTab = document.getElementById('tab-stats') || document.getElementById('tab-overview') || document.querySelector('.tab-section');
-  if(!statsTab) return;
+  const overviewTab = document.getElementById('tab-overview');
+  if(!overviewTab) return;
   const section = document.createElement('div');
   section.id = 'gainChartSection';
-  statsTab.appendChild(section);
+  section.style.marginTop = '18px';
+  overviewTab.appendChild(section);
 }
 
-const _origLoadDash3 = window.loadDashboard;
-window.loadDashboard = function(){
-  if(_origLoadDash3) _origLoadDash3();
-  setTimeout(()=>{
-    injectGainChartSection();
-    const cu = getCurrentUser();
-    if(!cu) return;
-    const u = getUsers().find(x=>x.id===cu.id)||cu;
-    renderGainChart(u);
-  }, 250);
-};
+
 </script>
 <!-- ========== FIN GRAPHIQUE ========== -->
   <!-- ========== JOHN CHAT ========== -->
@@ -2770,6 +2762,73 @@ window.loadAdmin = function(){
   }, 200);
 };
 </script>
-<!-- ========== FIN FIX RETRAIT ADMIN ========== -->
+<!-- ========== TEMPS RÉEL FIREBASE (onSnapshot) ========== -->
+<script>
+(function(){
+  function startRealtimeSync(){
+    if(!window._db) return;
+    try{
+      // Importer onSnapshot dynamiquement
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').then(({onSnapshot,collection})=>{
+
+        // ── Écoute temps réel des TRANSACTIONS ──
+        onSnapshot(collection(window._db,'transactions'), snapshot=>{
+          const fbTxs=[];
+          snapshot.forEach(d=>fbTxs.push(d.data()));
+          // Fusionner — Firebase gagne toujours
+          const local=getTransactions(); const merged=[...local];
+          fbTxs.forEach(ft=>{
+            const idx=merged.findIndex(t=>t.id===ft.id);
+            if(idx===-1) merged.push(ft);
+            else merged[idx]={...merged[idx],...ft};
+          });
+          saveTransactions(merged);
+
+          // Rafraîchir panneau admin automatiquement
+          const cu=getCurrentUser();
+          if(cu&&cu.role==='admin'){
+            // Recharger le tableau des retraits sans recharger toute la page
+            loadAdmin();
+            // Badge retraits en attente
+            const pending=merged.filter(t=>
+              t.type==='withdrawal'&&
+              (t.status==='pending'||t.status==='pending_admin_approval')
+            ).length;
+            const dot=document.getElementById('withdrawNotif');
+            if(dot){ dot.style.display=pending>0?'inline-block':'none'; dot.textContent=pending>0?pending:''; }
+          }
+        });
+
+        // ── Écoute temps réel des UTILISATEURS ──
+        onSnapshot(collection(window._db,'users'), snapshot=>{
+          const fbUsers=[];
+          snapshot.forEach(d=>fbUsers.push(d.data()));
+          const local=getUsers(); const merged=[...local];
+          fbUsers.forEach(fu=>{
+            const idx=merged.findIndex(u=>u.id===fu.id);
+            if(idx===-1) merged.push(fu);
+            else{
+              const lu=merged[idx];
+              if(!lu.emailVerified&&lu.emailVerifyCode) return;
+              merged[idx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+            }
+          });
+          saveUsers(merged);
+          // Rafraîchir panneau admin
+          const cu=getCurrentUser();
+          if(cu&&cu.role==='admin') loadAdmin();
+        });
+
+        console.log('[Realtime] Écoute Firebase active ✅');
+      }).catch(e=>console.warn('[Realtime]',e.message));
+    }catch(e){ console.warn('[Realtime] init:',e.message); }
+  }
+
+  // Démarrer dès que Firebase est prêt
+  if(window._firebaseReady) startRealtimeSync();
+  else document.addEventListener('firebaseReady',startRealtimeSync,{once:true});
+})();
+</script>
+<!-- ========== FIN TEMPS RÉEL ========== -->
 </body>
 </html>
