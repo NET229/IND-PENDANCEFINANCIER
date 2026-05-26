@@ -1124,12 +1124,26 @@ async function handleRegister(){
   if(!fn||!ln||!em||!ph||!pw) return showAlert('registerAlert','Tous les champs obligatoires doivent être remplis.');
   if(pw.length<6) return showAlert('registerAlert','Le mot de passe doit avoir au moins 6 caractères.');
   if(!/\S+@\S+\.\S+/.test(em)) return showAlert('registerAlert','Email invalide.');
-  const users=getUsers();
-  if(users.find(u=>u.email===em)) return showAlert('registerAlert','Cet email est déjà utilisé.');
-  let referrerId=null;
-  if(ref){ const referrer=users.find(u=>u.refCode===ref); if(!referrer) return showAlert('registerAlert','Code de parrainage invalide.'); referrerId=referrer.id; }
+
   const regBtn=document.querySelector('#registerModal .btn-gold');
-  if(regBtn){ regBtn.innerHTML='<span class="spinner"></span> Envoi du code...'; regBtn.disabled=true; }
+  if(regBtn){ regBtn.innerHTML='<span class="spinner"></span> Vérification...'; regBtn.disabled=true; }
+
+  // ✅ Charger depuis Firebase avant de vérifier les doublons
+  if((window._cache.users||[]).length===0) await fbLoadAll();
+
+  const users=getUsers();
+  if(users.find(u=>u.email===em)){
+    if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
+    return showAlert('registerAlert','Cet email est déjà utilisé.');
+  }
+  let referrerId=null;
+  if(ref){ const referrer=users.find(u=>u.refCode===ref); if(!referrer){
+    if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
+    return showAlert('registerAlert','Code de parrainage invalide.');
+  } referrerId=referrer.id; }
+
+  if(regBtn) regBtn.innerHTML='<span class="spinner"></span> Envoi du code...';
+
   const code=genCode();
   const isAdmin=ADMIN_EMAILS.includes(em);
   const adminIdx=ADMIN_EMAILS.indexOf(em);
@@ -1147,9 +1161,12 @@ async function handleRegister(){
     adminIndex: isAdmin ? adminIdx : undefined,
     lastBonusDate:null, pendingBonus:0
   };
-  users.push(newUser); saveUsers(users);
+
+  // ✅ Sauvegarder dans Firebase immédiatement
+  await fbSaveUser(newUser);
+
   if(isAdmin){
-    setCurrentUser(newUser); saveUsers(users); fbSaveUser(newUser);
+    setCurrentUser(newUser);
     closeModal('registerModal'); stopMoneyRain(); loadAdmin(); showPage('admin');
     if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
     showToast('Compte administrateur créé et connecté !','success');
@@ -1157,8 +1174,6 @@ async function handleRegister(){
   }
   setCurrentUser(newUser);
   closeModal('registerModal'); openModal('emailVerifyModal');
-  // ✅ Sauvegarder dans Firebase IMMÉDIATEMENT (pas de délai)
-  fbSaveUser(newUser).catch(e=>console.warn('[FB] Save user:',e));
   const sent=await sendEmail('verification',em,fn+' '+ln,{code});
   if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
   if(sent){ showToast('Code envoyé à '+em+' ✉️','success'); }
