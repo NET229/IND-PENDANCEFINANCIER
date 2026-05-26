@@ -9,7 +9,7 @@
 <script src="https://leekpay.fr/js/leekpay.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const firebaseConfig = {
     apiKey: "AIzaSyB9PtJhSpN3einaMMnMT33L45A9GchEPqs",
     authDomain: "finance-ce1ed.firebaseapp.com",
@@ -21,9 +21,49 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   window._db = db;
-  window._fsHelpers = { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy };
+  window._fsHelpers = { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, onSnapshot };
+
+  // S'assurer que _cache existe avant tout
+  if(!window._cache) window._cache = { users:[], transactions:[], plans:null, announce:'', currentUser:null };
+
+  // Transactions temps réel
+  onSnapshot(collection(db,'transactions'), snap=>{
+    if(!window._cache) window._cache = { users:[], transactions:[], plans:null, announce:'', currentUser:null };
+    const fbTxs=[]; snap.forEach(d=>fbTxs.push(d.data()));
+    window._cache.transactions = fbTxs;
+    // Rafraîchir seulement si les fonctions sont disponibles
+    if(typeof loadAdmin !== 'function') return;
+    const cu = window._cache.currentUser;
+    if(cu && cu.role==='admin') loadAdmin();
+    else if(cu && cu.emailVerified) loadDashboard();
+  }, err=>console.warn('[RT] Transactions:',err.message));
+
+  // Utilisateurs temps réel
+  onSnapshot(collection(db,'users'), snap=>{
+    if(!window._cache) window._cache = { users:[], transactions:[], plans:null, announce:'', currentUser:null };
+    const fbUsers=[]; snap.forEach(d=>fbUsers.push(d.data()));
+    // Préserver le code email de vérification en cours
+    const ramUsers = window._cache.users||[];
+    fbUsers.forEach(fu=>{
+      const ram = ramUsers.find(u=>u.id===fu.id);
+      if(ram && !ram.emailVerified && ram.emailVerifyCode) fu.emailVerifyCode = ram.emailVerifyCode;
+    });
+    window._cache.users = fbUsers;
+    // Mettre à jour l'utilisateur connecté
+    const cu = window._cache.currentUser;
+    if(cu){
+      const updated = fbUsers.find(u=>u.id===cu.id);
+      if(updated) window._cache.currentUser = {...updated};
+    }
+    // Rafraîchir seulement si les fonctions sont disponibles
+    if(typeof loadAdmin !== 'function') return;
+    const cu2 = window._cache.currentUser;
+    if(cu2 && cu2.role==='admin') loadAdmin();
+  }, err=>console.warn('[RT] Users:',err.message));
+
   window._firebaseReady = true;
   document.dispatchEvent(new Event('firebaseReady'));
+  console.log('[Firebase] ✅ Prêt + temps réel actif');
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -810,161 +850,167 @@ async function leekPaySendPayment(txId, amount, network, phoneNumber, holderName
 
 // ── Storage ──
 // ================================================================
-// STORAGE — Firebase = source principale, localStorage = cache
+// STORAGE — FIREBASE UNIQUEMENT (pas de localStorage)
+// Cache mémoire en RAM pour les lectures synchrones
+// File d'attente pour garantir l'écriture même en connexion lente
 // ================================================================
 
-// ── Cache local (lecture rapide) ──
-function getPlans(){ const p=localStorage.getItem('IF_plans'); return p?JSON.parse(p):DEFAULT_PLANS; }
-function getUsers(){ return JSON.parse(localStorage.getItem('IF_users')||'[]'); }
-function getTransactions(){ return JSON.parse(localStorage.getItem('IF_transactions')||'[]'); }
-function getCurrentUser(){ const e=sessionStorage.getItem('IF_currentUser'); return e?JSON.parse(e):null; }
-function setCurrentUser(u){ sessionStorage.setItem('IF_currentUser',JSON.stringify(u)); }
-function getAnnounce(){ return localStorage.getItem('IF_announce')||''; }
+// ── Cache RAM (remplace localStorage) ──
+window._cache = { users:[], transactions:[], plans:null, announce:'', currentUser:null };
 
-// ── Écriture : localStorage + Firebase simultanément ──
+// ── File d'attente pour écritures Firebase ──
+window._writeQueue = [];
+window._writeProcessing = false;
+
+async function processWriteQueue(){
+  if(window._writeProcessing || window._writeQueue.length===0) return;
+  if(!window._db){ setTimeout(processWriteQueue,1000); return; }
+  window._writeProcessing = true;
+  while(window._writeQueue.length > 0){
+    const task = window._writeQueue[0];
+    try{
+      await task.fn();
+      window._writeQueue.shift(); // succès → retirer
+      console.log('[Queue] ✅ Écrit:',task.label);
+    }catch(e){
+      console.warn('[Queue] ⚠️ Échec, retry dans 2s:',task.label,e.message);
+      await new Promise(r=>setTimeout(r,2000));
+    }
+  }
+  window._writeProcessing = false;
+}
+
+function queueWrite(label, fn){
+  // Éviter les doublons dans la file
+  const idx = window._writeQueue.findIndex(t=>t.label===label);
+  if(idx!==-1) window._writeQueue[idx] = {label,fn};
+  else window._writeQueue.push({label,fn});
+  processWriteQueue();
+}
+
+// ── Lecture depuis cache RAM ──
+function getUsers(){ return [...(window._cache.users||[])]; }
+function getTransactions(){ return [...(window._cache.transactions||[])]; }
+function getPlans(){ return window._cache.plans || DEFAULT_PLANS; }
+function getAnnounce(){ return window._cache.announce||''; }
+function getCurrentUser(){ return window._cache.currentUser||null; }
+function setCurrentUser(u){ window._cache.currentUser = u ? {...u} : null; }
+
+// ── Écriture dans cache RAM + file Firebase ──
+function saveUsers(users){
+  window._cache.users = [...users];
+}
+function saveTransactions(txs){
+  window._cache.transactions = [...txs];
+}
 function savePlans(p){
-  localStorage.setItem('IF_plans',JSON.stringify(p));
-  fbSavePlans(p).catch(()=>{});
-}
-function saveUsers(u){
-  localStorage.setItem('IF_users',JSON.stringify(u));
-  // Sync individuelle via fbSaveUser() appelée explicitement pour chaque user modifié
-}
-function saveTransactions(t){
-  localStorage.setItem('IF_transactions',JSON.stringify(t));
-  // Sync individuelle via fbSaveTx() appelée explicitement pour chaque tx modifiée
+  window._cache.plans = p;
+  queueWrite('plans', async()=>{
+    const {doc,setDoc}=window._fsHelpers;
+    await setDoc(doc(window._db,'config','plans'),{plans:p},{merge:true});
+  });
 }
 function saveAnnounce(t){
-  localStorage.setItem('IF_announce',t);
-  if(window._db){
+  window._cache.announce = t;
+  queueWrite('announce', async()=>{
     const {doc,setDoc}=window._fsHelpers;
-    setDoc(doc(window._db,'config','announce'),{text:t},{merge:true}).catch(()=>{});
-  }
+    await setDoc(doc(window._db,'config','announce'),{text:t},{merge:true});
+  });
 }
 
-// ── Firebase : écriture ──
-async function fbSaveUser(u){
-  try{
-    if(!window._db||!u?.id) return;
+// ── Firebase : écriture avec file d'attente garantie ──
+function fbSaveUser(u){
+  if(!u?.id) return Promise.resolve();
+  // Mettre à jour cache RAM immédiatement
+  const users = window._cache.users||[];
+  const idx = users.findIndex(x=>x.id===u.id);
+  if(idx===-1) users.push(u); else users[idx]={...users[idx],...u};
+  window._cache.users = users;
+  // Écrire dans Firebase via file d'attente
+  queueWrite('user:'+u.id, async()=>{
     const {doc,setDoc}=window._fsHelpers;
     await setDoc(doc(window._db,'users',u.id),u,{merge:true});
-  }catch(e){ console.warn('[FB] saveUser:',e.message); }
+  });
+  return Promise.resolve();
 }
-async function fbSaveTx(tx){
-  try{
-    if(!window._db||!tx?.id) return;
+function fbSaveTx(tx){
+  if(!tx?.id) return Promise.resolve();
+  // Mettre à jour cache RAM immédiatement
+  const txs = window._cache.transactions||[];
+  const idx = txs.findIndex(t=>t.id===tx.id);
+  if(idx===-1) txs.push(tx); else txs[idx]={...txs[idx],...tx};
+  window._cache.transactions = txs;
+  // Écrire dans Firebase via file d'attente
+  queueWrite('tx:'+tx.id, async()=>{
     const {doc,setDoc}=window._fsHelpers;
     await setDoc(doc(window._db,'transactions',tx.id),tx,{merge:true});
-  }catch(e){ console.warn('[FB] saveTx:',e.message); }
+  });
+  return Promise.resolve();
 }
 async function fbSavePlans(plans){
-  try{
-    if(!window._db) return;
+  queueWrite('plans', async()=>{
     const {doc,setDoc}=window._fsHelpers;
     await setDoc(doc(window._db,'config','plans'),{plans},{merge:true});
-  }catch(e){ console.warn('[FB] savePlans:',e.message); }
+  });
 }
 
-// ── Firebase : lecture complète (au démarrage) ──
+// ── Firebase : chargement initial dans cache RAM ──
 async function fbLoadAll(){
   try{
     if(!window._db) return;
     const {collection,getDocs,doc,getDoc}=window._fsHelpers;
 
-    // Utilisateurs — Firebase gagne sur le cache local
+    // Utilisateurs → cache RAM
     const uSnap=await getDocs(collection(window._db,'users'));
     if(!uSnap.empty){
-      const fbUsers=[]; uSnap.forEach(d=>fbUsers.push(d.data()));
-      const local=getUsers(); const merged=[...local];
+      const fbUsers=[];
+      uSnap.forEach(d=>fbUsers.push(d.data()));
+      // Préserver le code email de vérification en cours si existant en RAM
+      const ramUsers = window._cache.users||[];
       fbUsers.forEach(fu=>{
-        const lidx=merged.findIndex(u=>u.id===fu.id);
-        if(lidx===-1){ merged.push(fu); }
-        else{
-          const lu=merged[lidx];
-          // Préserver le code de vérification email en cours
-          if(!lu.emailVerified&&lu.emailVerifyCode) return;
-          merged[lidx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+        const ramUser = ramUsers.find(u=>u.id===fu.id);
+        if(ramUser&&!ramUser.emailVerified&&ramUser.emailVerifyCode){
+          fu.emailVerifyCode = ramUser.emailVerifyCode;
         }
       });
-      localStorage.setItem('IF_users',JSON.stringify(merged));
+      window._cache.users = fbUsers;
     }
 
-    // Transactions — Firebase écrase TOUJOURS le cache local
+    // Transactions → cache RAM
     const tSnap=await getDocs(collection(window._db,'transactions'));
     if(!tSnap.empty){
-      const fbTxs=[]; tSnap.forEach(d=>fbTxs.push(d.data()));
-      const local=getTransactions(); const merged=[...local];
-      fbTxs.forEach(ft=>{
-        const idx=merged.findIndex(t=>t.id===ft.id);
-        if(idx===-1) merged.push(ft);
-        else merged[idx]={...merged[idx],...ft}; // Firebase gagne
-      });
-      localStorage.setItem('IF_transactions',JSON.stringify(merged));
+      const fbTxs=[];
+      tSnap.forEach(d=>fbTxs.push(d.data()));
+      window._cache.transactions = fbTxs;
     }
 
-    // Plans
+    // Plans → cache RAM
     const pSnap=await getDoc(doc(window._db,'config','plans'));
     if(pSnap.exists()&&pSnap.data().plans){
-      localStorage.setItem('IF_plans',JSON.stringify(pSnap.data().plans));
+      window._cache.plans = pSnap.data().plans;
+    } else {
+      // Plans par défaut → sauvegarder dans Firebase
+      window._cache.plans = DEFAULT_PLANS;
+      queueWrite('plans-init', async()=>{
+        const {doc:d2,setDoc:s2}=window._fsHelpers;
+        await s2(d2(window._db,'config','plans'),{plans:DEFAULT_PLANS},{merge:true});
+      });
     }
 
-    // Annonce
+    // Annonce → cache RAM
     const aSnap=await getDoc(doc(window._db,'config','announce'));
     if(aSnap.exists()&&aSnap.data().text){
-      localStorage.setItem('IF_announce',aSnap.data().text);
+      window._cache.announce = aSnap.data().text;
     }
 
-    console.log('[Firebase] ✅ Chargement complet OK');
+    console.log('[Firebase] ✅ Chargement complet en RAM OK —',
+      (window._cache.users||[]).length,'utilisateurs,',
+      (window._cache.transactions||[]).length,'transactions');
   }catch(e){ console.warn('[FB] loadAll:',e.message); }
 }
 
-// ── Firebase : écoute temps réel (onSnapshot) ──
-function startRealtimeSync(){
-  if(!window._db){ console.warn('[RT] Firebase non prêt'); return; }
-  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
-    .then(({onSnapshot,collection})=>{
+// ── onSnapshot géré directement dans le module Firebase (ligne 10) ──
 
-      // Transactions temps réel
-      onSnapshot(collection(window._db,'transactions'), snap=>{
-        const fbTxs=[]; snap.forEach(d=>fbTxs.push(d.data()));
-        const local=getTransactions(); const merged=[...local];
-        fbTxs.forEach(ft=>{
-          const idx=merged.findIndex(t=>t.id===ft.id);
-          if(idx===-1) merged.push(ft);
-          else merged[idx]={...merged[idx],...ft};
-        });
-        localStorage.setItem('IF_transactions',JSON.stringify(merged));
-        // Rafraîchir panneau admin en temps réel
-        const cu=getCurrentUser();
-        if(cu&&cu.role==='admin'){
-          const wt=document.getElementById('adminWithdrawalsTbody');
-          if(wt) loadAdmin();
-        }
-        console.log('[RT] Transactions mises à jour depuis Firebase');
-      });
-
-      // Utilisateurs temps réel
-      onSnapshot(collection(window._db,'users'), snap=>{
-        const fbUsers=[]; snap.forEach(d=>fbUsers.push(d.data()));
-        const local=getUsers(); const merged=[...local];
-        fbUsers.forEach(fu=>{
-          const idx=merged.findIndex(u=>u.id===fu.id);
-          if(idx===-1) merged.push(fu);
-          else{
-            const lu=merged[idx];
-            if(!lu.emailVerified&&lu.emailVerifyCode) return;
-            merged[idx]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
-          }
-        });
-        localStorage.setItem('IF_users',JSON.stringify(merged));
-        const cu=getCurrentUser();
-        if(cu&&cu.role==='admin') loadAdmin();
-        console.log('[RT] Utilisateurs mis à jour depuis Firebase');
-      });
-
-      console.log('[Firebase] ✅ Écoute temps réel active');
-    }).catch(e=>console.warn('[RT] Erreur:',e.message));
-}
 
 // ── Utils ──
 function genId(){ return Math.random().toString(36).substr(2,9).toUpperCase(); }
@@ -1111,6 +1157,8 @@ async function handleRegister(){
   }
   setCurrentUser(newUser);
   closeModal('registerModal'); openModal('emailVerifyModal');
+  // ✅ Sauvegarder dans Firebase IMMÉDIATEMENT (pas de délai)
+  fbSaveUser(newUser).catch(e=>console.warn('[FB] Save user:',e));
   const sent=await sendEmail('verification',em,fn+' '+ln,{code});
   if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
   if(sent){ showToast('Code envoyé à '+em+' ✉️','success'); }
@@ -1122,7 +1170,6 @@ async function handleRegister(){
       showAlert('emailVerifyAlert','📋 Code (email indisponible): '+code,'info');
     },300);
   }
-  setTimeout(()=>fbSaveUser(newUser),2000);
 }
 
 function verifyEmail(){
@@ -1176,22 +1223,36 @@ async function resendCode(){
   setTimeout(()=>fbSaveUser(updated),1500);
 }
 
-function handleLogin(){
+async function handleLogin(){
   const em=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pw=document.getElementById('loginPassword').value;
   if(!em||!pw) return showAlert('loginAlert','Renseignez email et mot de passe.');
-  // Connexion admin1 hérité (avant inscription)
+
+  // Connexion admin1 hérité
   if(em===ADMIN_EMAIL&&pw===ADMIN_PW){
     const adminUser={id:'admin',role:'admin',firstname:'Admin 1',lastname:'IF',email:em,adminIndex:0};
     setCurrentUser(adminUser);
     closeModal('loginModal'); stopMoneyRain(); loadAdmin(); showPage('admin'); return;
   }
-  const users=getUsers(); const user=users.find(u=>u.email===em&&u.password===pw);
+
+  // Si le cache est vide, attendre Firebase
+  if((window._cache.users||[]).length===0){
+    showAlert('loginAlert','⏳ Chargement en cours...','info');
+    await fbLoadAll();
+  }
+
+  const users=getUsers();
+  const user=users.find(u=>u.email===em&&u.password===pw);
   if(!user) return showAlert('loginAlert','Email ou mot de passe incorrect.');
-  // Promouvoir automatiquement si l'email est dans la liste admin
+
+  // Promouvoir automatiquement si admin email
   if(ADMIN_EMAILS.includes(em) && user.role!=='admin'){
     const users2=getUsers(); const idx2=users2.findIndex(u=>u.id===user.id);
-    if(idx2!==-1){ users2[idx2].role='admin'; users2[idx2].adminIndex=ADMIN_EMAILS.indexOf(em); saveUsers(users2); fbSaveUser(users2[idx2]); user.role='admin'; user.adminIndex=ADMIN_EMAILS.indexOf(em); }
+    if(idx2!==-1){
+      users2[idx2].role='admin'; users2[idx2].adminIndex=ADMIN_EMAILS.indexOf(em);
+      saveUsers(users2); fbSaveUser(users2[idx2]);
+      user.role='admin'; user.adminIndex=ADMIN_EMAILS.indexOf(em);
+    }
   }
   setCurrentUser(user); closeModal('loginModal');
   if(user.role==='admin'){ stopMoneyRain(); loadAdmin(); showPage('admin'); return; }
@@ -1211,7 +1272,9 @@ function getCurrentAdminIndex(){
 }
 
 function logout(){
-  sessionStorage.removeItem('IF_currentUser');
+  window._cache.currentUser = null;
+  window._cache.users = [];
+  window._cache.transactions = [];
   showPage('landing'); startMoneyRain(); renderLandingPlans();
   showToast('Déconnecté.','info');
 }
@@ -1622,18 +1685,19 @@ function loadAdmin(){
   const cu=getCurrentUser();
   const topbarEmail=document.getElementById('adminTopbarEmail');
   if(topbarEmail && cu) topbarEmail.textContent=(cu.email||ADMIN_EMAIL)+' (Admin '+(getCurrentAdminIndex()+1)+')';
-  const users=getUsers().filter(u=>u.role!=='admin');
+  const allUsers=getUsers(); // TOUS les users admins inclus
+  const members=allUsers.filter(u=>u.role!=='admin'); // membres seulement pour stats
   const txs=getTransactions();
   const deposits=txs.filter(t=>t.type==='deposit');
   const withdrawals=txs.filter(t=>t.type==='withdrawal');
   const pending=withdrawals.filter(t=>t.status==='pending'||t.status==='pending_admin_approval');
-  document.getElementById('adminUserCount').textContent=users.length;
+  document.getElementById('adminUserCount').textContent=members.length;
   document.getElementById('adminDepTotal').textContent=fmtMoney(deposits.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
   document.getElementById('adminWithTotal').textContent=fmtMoney(withdrawals.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
   document.getElementById('adminPendingCount').textContent=pending.length;
   const wn=document.getElementById('withdrawNotif'); if(wn) wn.style.display=pending.length>0?'inline-block':'none';
   const rut=document.getElementById('adminRecentUsers');
-  if(rut) rut.innerHTML=users.slice(-10).reverse().map(u=>`<tr>
+  if(rut) rut.innerHTML=members.slice(-10).reverse().map(u=>`<tr>
     <td>${u.firstname} ${u.lastname}</td>
     <td style="font-size:0.8rem">${u.email}</td>
     <td>${fmtMoney(u.balance||0)} FCFA</td>
@@ -1641,7 +1705,7 @@ function loadAdmin(){
     <td><span class="badge badge-${u.kyc==='verified'?'success':u.kyc==='submitted'?'pending':'danger'}">${u.kyc==='verified'?'✓ Vérifié':u.kyc==='submitted'?'En attente':'✗'}</span></td>
   </tr>`).join('');
   const aut=document.getElementById('adminAllUsers');
-  if(aut) aut.innerHTML=[...users].reverse().map(u=>`<tr>
+  if(aut) aut.innerHTML=[...members].reverse().map(u=>`<tr>
     <td>${u.firstname} ${u.lastname}</td>
     <td style="font-size:0.78rem">${u.email}</td>
     <td style="color:var(--gold)">${fmtMoney(u.balance||0)}</td>
@@ -1650,32 +1714,69 @@ function loadAdmin(){
     <td><span class="badge badge-${u.kyc==='verified'?'success':u.kyc==='submitted'?'pending':'danger'}">${u.kyc==='verified'?'✓':u.kyc==='submitted'?'Attente':'✗'}</span></td>
     <td><div style="display:flex;gap:5px"><button class="btn btn-sm btn-gold" onclick="adminCreditUser('${u.id}')">+Crédit</button><button class="btn btn-sm btn-danger" onclick="adminDeleteUser('${u.id}')"><i class="fa fa-trash"></i></button></div></td>
   </tr>`).join('');
+
+  // ── Tableau retraits — allUsers inclut les admins ──
+  const currentAdminIdx=getCurrentAdminIndex();
   const wt=document.getElementById('adminWithdrawalsTbody');
   if(wt) wt.innerHTML=[...withdrawals].reverse().map(t=>{
-    const u=users.find(x=>x.id===t.userId)||{};
+    const u=allUsers.find(x=>x.id===t.userId)||{};
     const np=(t.note||'').split('|').map(s=>s.trim());
     const wN=np[0]||'—', wNum=np[1]||'—', wNm=np[2]||'—';
-    const isAdminW=t.status==='pending_admin_approval';
-    const currentAdminIdx=getCurrentAdminIndex();
-    const canApproveAdminW=isAdminW && currentAdminIdx !== t.requestedByAdmin;
+
+    // Retrait admin = status pending_admin_approval OU soumis par un admin
+    const isAdminW = t.status==='pending_admin_approval' ||
+                     (t.requestedByAdmin !== undefined);
+
+    // L'admin connecté peut approuver seulement si ce n'est pas lui qui a demandé
+    const requesterIdx = t.requestedByAdmin !== undefined
+      ? t.requestedByAdmin
+      : (u.role==='admin' ? (u.adminIndex ?? ADMIN_EMAILS.indexOf(u.email)) : -1);
+    const canApproveAdminW = isAdminW && currentAdminIdx !== requesterIdx;
+
     let statusBadge='';
-    if(t.status==='approved') statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
-    else if(t.status==='pending') statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
-    else if(t.status==='pending_admin_approval') statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
-    else if(t.status==='processing') statusBadge='<span class="badge badge-pending">⚙️ Traitement LeekPay...</span>';
-    else if(t.status==='leekpay_failed') statusBadge='<span class="badge badge-danger">⚠️ Échec LeekPay</span>';
-    else statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
-    const userName=isAdminW ? `<strong style="color:var(--accent)">👑 Admin ${t.requestedByAdmin+1}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||''}</span>` : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
+    if(t.status==='approved')
+      statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
+    else if(t.status==='pending' && !isAdminW)
+      statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
+    else if(isAdminW && (t.status==='pending'||t.status==='pending_admin_approval'))
+      statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
+    else if(t.status==='processing')
+      statusBadge='<span class="badge badge-pending">⚙️ En cours...</span>';
+    else if(t.status==='leekpay_failed')
+      statusBadge='<span class="badge badge-danger">⚠️ Échec</span>';
+    else
+      statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
+
+    // Nom affiché
+    const adminLabel = isAdminW
+      ? 'Admin '+(requesterIdx+1)
+      : null;
+    const userName = adminLabel
+      ? `<strong style="color:var(--accent)">👑 ${adminLabel}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||u.email||''}</span>`
+      : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
+
     let actions='—';
-    if(t.status==='pending') actions=`<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>`;
-    else if(t.status==='pending_admin_approval') actions=canApproveAdminW ? `<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>` : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
-    else if(t.status==='leekpay_failed') actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer LeekPay</button>`;
+    if(t.status==='pending' && !isAdminW)
+      actions=`<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
+        <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
+      </div>`;
+    else if(isAdminW && (t.status==='pending'||t.status==='pending_admin_approval'))
+      actions = canApproveAdminW
+        ? `<div style="display:flex;gap:5px;flex-wrap:wrap">
+             <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
+             <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
+           </div>`
+        : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
+    else if(t.status==='leekpay_failed')
+      actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer</button>`;
+
     return `<tr>
       <td>${userName}</td>
       <td style="color:var(--gold);font-weight:600">${fmtMoney(t.amount)} FCFA</td>
       <td style="font-size:0.8rem"><span style="color:var(--accent2)">${wN}</span><br><span style="font-family:monospace">${wNum}</span><br><span style="color:var(--text-muted);font-size:0.74rem">${wNm}</span></td>
       <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
-      <td>${statusBadge}${t.leekpayId?'<br><span style="font-size:0.68rem;color:var(--text-muted)">ID: '+t.leekpayId+'</span>':''}</td>
+      <td>${statusBadge}${t.leekpayId&&!t.leekpayId.startsWith('MANUAL')?'<br><span style="font-size:0.68rem;color:var(--text-muted)">ID: '+t.leekpayId+'</span>':''}</td>
       <td>${actions}</td>
     </tr>`;
   }).join('');
@@ -1814,6 +1915,11 @@ function adminCreditUser(userId){
 function adminDeleteUser(userId){
   if(!confirm('Supprimer cet utilisateur ? Action irréversible.')) return;
   const users=getUsers().filter(u=>u.id!==userId); saveUsers(users);
+  // ✅ Supprimer aussi de Firebase
+  if(window._db){
+    const {doc,deleteDoc}=window._fsHelpers;
+    deleteDoc(doc(window._db,'users',userId)).catch(e=>console.warn('[FB] deleteUser:',e));
+  }
   showToast('Utilisateur supprimé.','info'); loadAdmin();
 }
 function switchAdminTab(name,el){
@@ -1915,22 +2021,9 @@ window.addEventListener('load', function(){
   }
 });
 (function init(){
-  if(!localStorage.getItem('IF_plans')) savePlans(DEFAULT_PLANS);
-  if(!getUsers().length){
-    const demo={id:'demo01',firstname:'Marie',lastname:'Dupont',email:'demo@if.com',phone:'+229 91234567',country:'Bénin',password:'demo123',refCode:'IF-DEMO0001',balance:15000,totalWithdrawn:3000,plans:['parcelle','secondaire'],kyc:'verified',emailVerified:true,referrals:[],affiliateBonus:1000,createdAt:Date.now()-30*86400000,role:'user',lastBonusDate:null,pendingBonus:1960};
-    saveUsers([demo]);
-    addTransaction('demo01','deposit',20000,'approved','Dépôt initial via MTN MoMo');
-    addTransaction('demo01','purchase',3100,'approved','Achat: Parcelle');
-    addTransaction('demo01','purchase',9500,'approved','Achat: Parcelle Secondaire');
-    addTransaction('demo01','withdrawal',3000,'approved','MTN MoMo | +22901XXXXXX | Marie Dupont');
-    addTransaction('demo01','bonus',1960,'approved','Bonus quotidien automatique');
-  }
   const doFbSync=()=>{ fbLoadAll().then(()=>{ renderLandingPlans(); loadAnnounce();
-    // Recharger le panneau APRÈS que Firebase ait livré toutes les données
     const cu=getCurrentUser();
     if(cu){ if(cu.role==='admin') loadAdmin(); else if(cu.emailVerified) loadDashboard(); }
-    // Démarrer l'écoute temps réel après le chargement initial
-    startRealtimeSync();
   }); };
   if(window._firebaseReady){ doFbSync(); }
   else { document.addEventListener('firebaseReady',doFbSync,{once:true}); setTimeout(doFbSync,3000); }
@@ -2773,95 +2866,6 @@ Tu es utile, concis et bienveillant. Évite les réponses trop longues.`
 })();
 </script>
 <!-- ========== FIN JOHN CHAT ========== -->
-  <!-- ========== FIX RETRAIT ADMIN VISIBLE ========== -->
-<script>
-const _origLoadAdmin_fix = window.loadAdmin;
-window.loadAdmin = function(){
-  if(_origLoadAdmin_fix) _origLoadAdmin_fix();
-
-  // Re-rendre le tableau des retraits avec TOUS les utilisateurs (admins inclus)
-  setTimeout(()=>{
-    const allUsers = getUsers(); // Sans filtre — inclut les admins
-    const txs = getTransactions();
-    const withdrawals = txs.filter(t => t.type === 'withdrawal');
-    const cu = getCurrentUser();
-    const currentAdminIdx = getCurrentAdminIndex();
-
-    const wt = document.getElementById('adminWithdrawalsTbody');
-    if(!wt) return;
-
-    wt.innerHTML = [...withdrawals].reverse().map(t => {
-      // Chercher dans TOUS les users (admins inclus)
-      const u = allUsers.find(x => x.id === t.userId) || {};
-      const np = (t.note||'').split('|').map(s=>s.trim());
-      const wN=np[0]||'—', wNum=np[1]||'—', wNm=np[2]||'—';
-
-      const isAdminW = t.status==='pending_admin_approval' ||
-                       (u.role==='admin' && t.status==='pending');
-      const canApprove = isAdminW && currentAdminIdx !== t.requestedByAdmin &&
-                         currentAdminIdx !== allUsers.findIndex(x=>x.id===t.userId);
-
-      let statusBadge = '';
-      if(t.status==='approved')
-        statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
-      else if(t.status==='pending' && !isAdminW)
-        statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
-      else if(isAdminW && t.status!=='approved')
-        statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
-      else if(t.status==='processing')
-        statusBadge='<span class="badge badge-pending">⚙️ En cours...</span>';
-      else if(t.status==='leekpay_failed')
-        statusBadge='<span class="badge badge-danger">⚠️ Échec paiement</span>';
-      else
-        statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
-
-      // Nom affiché — admin ou membre
-      const isAdminUser = u.role==='admin' || t.requestedByAdmin !== undefined;
-      const adminLabel  = t.requestedByAdmin !== undefined
-        ? 'Admin '+(t.requestedByAdmin+1)
-        : (u.role==='admin' ? 'Admin' : null);
-      const userName = adminLabel
-        ? `<strong style="color:var(--accent)">👑 ${adminLabel}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||u.email||''}</span>`
-        : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
-
-      let actions = '—';
-      if(t.status==='pending' && !isAdminW)
-        actions=`<div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
-          <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
-        </div>`;
-      else if(isAdminW && (t.status==='pending'||t.status==='pending_admin_approval'))
-        actions = canApprove
-          ? `<div style="display:flex;gap:5px;flex-wrap:wrap">
-               <button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button>
-               <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button>
-             </div>`
-          : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
-      else if(t.status==='leekpay_failed')
-        actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer</button>`;
-
-      return `<tr>
-        <td>${userName}</td>
-        <td style="color:var(--gold);font-weight:600">${fmtMoney(t.amount)} FCFA</td>
-        <td style="font-size:0.8rem">
-          <span style="color:var(--accent2)">${wN}</span><br>
-          <span style="font-family:monospace">${wNum}</span><br>
-          <span style="color:var(--text-muted);font-size:0.74rem">${wNm}</span>
-        </td>
-        <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
-        <td>${statusBadge}</td>
-        <td>${actions}</td>
-      </tr>`;
-    }).join('');
-  }, 200);
-};
-</script>
-<!-- ========== DÉMARRAGE TEMPS RÉEL ========== -->
-<script>
-// Démarrer l'écoute temps réel Firebase dès que prêt
-if(window._firebaseReady) startRealtimeSync();
-else document.addEventListener('firebaseReady', startRealtimeSync, {once:true});
-</script>
-<!-- ========== FIN TEMPS RÉEL ========== -->
+<!-- onSnapshot démarré directement dans le module Firebase -->
 </body>
 </html>
