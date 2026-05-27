@@ -890,8 +890,11 @@ async function fbLoadAll(){
     // Plans
     if(pSnap.exists()&&pSnap.data().plans) savePlans(pSnap.data().plans);
 
-    // Annonce
-    if(aSnap.exists()&&aSnap.data().text) saveAnnounce(aSnap.data().text);
+    // Annonce — cache local uniquement, pas de re-écriture Firebase
+    if(aSnap.exists()&&aSnap.data().text){
+      localStorage.setItem('IF_announce', aSnap.data().text);
+      loadAnnounce();
+    }
 
     console.log('[FB] ✅ Sync complète —',getUsers().length,'users,',getTransactions().length,'txs');
   } catch(e){ console.warn('[FB] loadAll:',e.message); }
