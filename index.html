@@ -760,7 +760,7 @@ const ADMIN_EMAIL = ADMIN_EMAILS[0];
 const ADMIN_PW    = 'Admin2003'; // mot de passe hérité admin1 (avant inscription)
 
 // ── LeekPay Config ──
-const LEEKPAY_API_KEY = 'pk_live_5MosLN0wFPDxYtlbWcS98dFXbuPim0Lk';
+const LEEKPAY_API_KEY = 'pk_live_YsiSAzXEBo6Y2UWHBVBjNXUmChbv59k7';
 
 const AFFILIATE_BONUS = 500;
 
@@ -808,25 +808,37 @@ async function leekPaySendPayment(txId, amount, network, phoneNumber, holderName
   return { success: true, leekpayId: 'MANUAL-'+txId };
 }
 
-// ── Storage ──
+// ── Storage — localStorage = cache rapide, Firebase = source de vérité ──
 function getPlans(){ const p=localStorage.getItem('IF_plans'); return p?JSON.parse(p):DEFAULT_PLANS; }
-function savePlans(p){ localStorage.setItem('IF_plans',JSON.stringify(p)); }
+function savePlans(p){
+  localStorage.setItem('IF_plans',JSON.stringify(p));
+  fbSavePlans(p).catch(()=>{});
+}
 function getUsers(){ return JSON.parse(localStorage.getItem('IF_users')||'[]'); }
-function saveUsers(u){ localStorage.setItem('IF_users',JSON.stringify(u)); }
+function saveUsers(arr){
+  // localStorage uniquement — Firebase se fait via fbSaveUser() explicitement
+  localStorage.setItem('IF_users',JSON.stringify(arr));
+}
 function getTransactions(){ return JSON.parse(localStorage.getItem('IF_transactions')||'[]'); }
-function saveTransactions(t){ localStorage.setItem('IF_transactions',JSON.stringify(t)); }
+function saveTransactions(arr){ localStorage.setItem('IF_transactions',JSON.stringify(arr)); }
 function getCurrentUser(){ const e=sessionStorage.getItem('IF_currentUser'); return e?JSON.parse(e):null; }
-function setCurrentUser(u){ sessionStorage.setItem('IF_currentUser',JSON.stringify(u)); }
+function setCurrentUser(u){
+  if(u) sessionStorage.setItem('IF_currentUser',JSON.stringify(u));
+  else sessionStorage.removeItem('IF_currentUser');
+}
 function getAnnounce(){ return localStorage.getItem('IF_announce')||''; }
-function saveAnnounce(t){ localStorage.setItem('IF_announce',t); }
+function saveAnnounce(t){
+  localStorage.setItem('IF_announce',t);
+  if(window._db){ const {doc,setDoc}=window._fsHelpers; setDoc(doc(window._db,'config','announce'),{text:t},{merge:true}).catch(()=>{}); }
+}
 
 // ── Firebase Sync ──
 async function fbSaveUser(u){
-  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'users',u.id),u); }
+  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'users',u.id),u,{merge:true}); }
   catch(e){ console.warn('[FB] saveUser:',e.message); }
 }
 async function fbSaveTx(tx){
-  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'transactions',tx.id),tx); }
+  try{ if(!window._db)return; const {doc,setDoc}=window._fsHelpers; await setDoc(doc(window._db,'transactions',tx.id),tx,{merge:true}); }
   catch(e){ console.warn('[FB] saveTx:',e.message); }
 }
 async function fbSavePlans(plans){
@@ -837,38 +849,51 @@ async function fbLoadAll(){
   try{
     if(!window._db) return;
     const {collection,getDocs,doc,getDoc}=window._fsHelpers;
-    const uSnap=await getDocs(collection(window._db,'users'));
+
+    // Tout charger en parallèle
+    const [uSnap,tSnap,pSnap,aSnap] = await Promise.all([
+      getDocs(collection(window._db,'users')),
+      getDocs(collection(window._db,'transactions')),
+      getDoc(doc(window._db,'config','plans')),
+      getDoc(doc(window._db,'config','announce'))
+    ]);
+
+    // Utilisateurs — Firebase gagne sur le cache local
     if(!uSnap.empty){
       const fbUsers=[]; uSnap.forEach(d=>fbUsers.push(d.data()));
-      const local=getUsers();
-      const merged=[...local];
+      const local=getUsers(); const merged=[...local];
       fbUsers.forEach(fu=>{
-        const lidx=merged.findIndex(u=>u.id===fu.id);
-        if(lidx===-1){ merged.push(fu); }
+        const i=merged.findIndex(u=>u.id===fu.id);
+        if(i===-1){ merged.push(fu); }
         else {
-          const lu=merged[lidx];
-          if(!lu.emailVerified && lu.emailVerifyCode){ return; }
-          merged[lidx]={...fu, emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+          const lu=merged[i];
+          // Préserver le code de vérification en cours
+          if(!lu.emailVerified && lu.emailVerifyCode) return;
+          merged[i]={...fu, emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
         }
       });
       saveUsers(merged);
     }
-    const tSnap=await getDocs(collection(window._db,'transactions'));
+
+    // Transactions — Firebase gagne toujours
     if(!tSnap.empty){
       const fbTxs=[]; tSnap.forEach(d=>fbTxs.push(d.data()));
-      const local=getTransactions();
-      const merged=[...local];
-      // Firebase écrase toujours le local
+      const local=getTransactions(); const merged=[...local];
       fbTxs.forEach(ft=>{
-        const idx=merged.findIndex(t=>t.id===ft.id);
-        if(idx===-1) merged.push(ft);
-        else merged[idx]={...merged[idx],...ft};
+        const i=merged.findIndex(t=>t.id===ft.id);
+        if(i===-1) merged.push(ft);
+        else merged[i]={...merged[i],...ft};
       });
       saveTransactions(merged);
     }
-    const pSnap=await getDoc(doc(window._db,'config','plans'));
-    if(pSnap.exists()&&pSnap.data().plans){ savePlans(pSnap.data().plans); }
-    console.log('[Firebase] Sync OK');
+
+    // Plans
+    if(pSnap.exists()&&pSnap.data().plans) savePlans(pSnap.data().plans);
+
+    // Annonce
+    if(aSnap.exists()&&aSnap.data().text) saveAnnounce(aSnap.data().text);
+
+    console.log('[FB] ✅ Sync complète —',getUsers().length,'users,',getTransactions().length,'txs');
   } catch(e){ console.warn('[FB] loadAll:',e.message); }
 }
 
@@ -1007,9 +1032,11 @@ async function handleRegister(){
     adminIndex: isAdmin ? adminIdx : undefined,
     lastBonusDate:null, pendingBonus:0
   };
-  users.push(newUser); saveUsers(users);
+  // ✅ Firebase EN PREMIER
+  fbSaveUser(newUser);
+  users.push(newUser); localStorage.setItem('IF_users',JSON.stringify(users));
   if(isAdmin){
-    setCurrentUser(newUser); saveUsers(users); fbSaveUser(newUser);
+    setCurrentUser(newUser);
     closeModal('registerModal'); stopMoneyRain(); loadAdmin(); showPage('admin');
     if(regBtn){ regBtn.innerHTML='<i class="fa fa-user-plus"></i> S\'inscrire gratuitement'; regBtn.disabled=false; }
     showToast('Compte administrateur créé et connecté !','success');
@@ -1028,7 +1055,7 @@ async function handleRegister(){
       showAlert('emailVerifyAlert','📋 Code (email indisponible): '+code,'info');
     },300);
   }
-  setTimeout(()=>fbSaveUser(newUser),2000);
+  fbSaveUser(newUser);
 }
 
 function verifyEmail(){
@@ -1045,17 +1072,7 @@ function verifyEmail(){
     users.push(updated); saveUsers(users); setCurrentUser(updated);
   } else {
     users[idx].emailVerified=true; users[idx].kyc='email_verified'; users[idx].emailVerifyCode=null;
-    if(users[idx].referrerId){
-      const ridx=users.findIndex(u=>u.id===users[idx].referrerId);
-      if(ridx!==-1){
-        users[ridx].balance=(users[ridx].balance||0)+AFFILIATE_BONUS;
-        users[ridx].affiliateBonus=(users[ridx].affiliateBonus||0)+AFFILIATE_BONUS;
-        users[ridx].referrals=users[ridx].referrals||[];
-        if(!users[ridx].referrals.includes(users[idx].id)) users[ridx].referrals.push(users[idx].id);
-        addTransaction(users[ridx].id,'affiliate',AFFILIATE_BONUS,'approved','Parrainage: '+users[idx].firstname+' '+users[idx].lastname);
-        fbSaveUser(users[ridx]);
-      }
-    }
+    // Bonus parrainage déclenché au 1er DÉPÔT du filleul (pas ici)
     saveUsers(users); setCurrentUser(users[idx]); fbSaveUser(users[idx]);
   }
   closeModal('emailVerifyModal'); showToast('Email vérifié ! ✅','success');
@@ -1082,24 +1099,37 @@ async function resendCode(){
   setTimeout(()=>fbSaveUser(updated),1500);
 }
 
-function handleLogin(){
+async function handleLogin(){
   const em=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pw=document.getElementById('loginPassword').value;
   if(!em||!pw) return showAlert('loginAlert','Renseignez email et mot de passe.');
-  // Connexion admin1 hérité (avant inscription)
+
+  const btn=document.querySelector('#loginModal .btn-gold');
+  if(btn){ btn.innerHTML='<span class="spinner"></span> Connexion...'; btn.disabled=true; }
+  const reset=()=>{ if(btn){ btn.innerHTML='Se connecter'; btn.disabled=false; } };
+
+  // Admin hérité
   if(em===ADMIN_EMAIL&&pw===ADMIN_PW){
-    const adminUser={id:'admin',role:'admin',firstname:'Admin 1',lastname:'IF',email:em,adminIndex:0};
-    setCurrentUser(adminUser);
-    closeModal('loginModal'); stopMoneyRain(); loadAdmin(); showPage('admin'); return;
+    setCurrentUser({id:'admin',role:'admin',firstname:'Admin 1',lastname:'IF',email:em,adminIndex:0});
+    reset(); closeModal('loginModal'); stopMoneyRain(); loadAdmin(); showPage('admin'); return;
   }
-  const users=getUsers(); const user=users.find(u=>u.email===em&&u.password===pw);
-  if(!user) return showAlert('loginAlert','Email ou mot de passe incorrect.');
-  // Promouvoir automatiquement si l'email est dans la liste admin
-  if(ADMIN_EMAILS.includes(em) && user.role!=='admin'){
-    const users2=getUsers(); const idx2=users2.findIndex(u=>u.id===user.id);
-    if(idx2!==-1){ users2[idx2].role='admin'; users2[idx2].adminIndex=ADMIN_EMAILS.indexOf(em); saveUsers(users2); fbSaveUser(users2[idx2]); user.role='admin'; user.adminIndex=ADMIN_EMAILS.indexOf(em); }
+
+  // Charger Firebase si localStorage vide (premier accès sur cet appareil)
+  if(getUsers().length===0){
+    await fbLoadAll();
   }
-  setCurrentUser(user); closeModal('loginModal');
+
+  const users=getUsers();
+  const user=users.find(u=>u.email===em&&u.password===pw);
+  if(!user){ reset(); return showAlert('loginAlert','Email ou mot de passe incorrect.'); }
+
+  // Promouvoir admin si email reconnu
+  if(ADMIN_EMAILS.includes(em)&&user.role!=='admin'){
+    const all=getUsers(); const i=all.findIndex(u=>u.id===user.id);
+    if(i!==-1){ all[i].role='admin'; all[i].adminIndex=ADMIN_EMAILS.indexOf(em); localStorage.setItem('IF_users',JSON.stringify(all)); fbSaveUser(all[i]); user.role='admin'; user.adminIndex=ADMIN_EMAILS.indexOf(em); }
+  }
+
+  setCurrentUser(user); reset(); closeModal('loginModal');
   if(user.role==='admin'){ stopMoneyRain(); loadAdmin(); showPage('admin'); return; }
   if(!user.emailVerified){ openModal('emailVerifyModal'); return; }
   stopMoneyRain(); loadDashboard(); showPage('dashboard');
@@ -1123,10 +1153,28 @@ function logout(){
 }
 
 function addTransaction(userId,type,amount,status,note=''){
-  const txs=getTransactions();
   const tx={id:genId(),userId,type,amount,status,note,date:Date.now()};
-  txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
-  }
+  const txs=getTransactions(); txs.push(tx);
+  localStorage.setItem('IF_transactions',JSON.stringify(txs));
+  fbSaveTx(tx);
+}
+
+// Bonus parrainage au 1er dépôt approuvé du filleul
+function triggerAffiliateBonus(userId){
+  const allTxs=getTransactions();
+  const deposits=allTxs.filter(t=>t.userId===userId&&t.type==='deposit'&&t.status==='approved');
+  if(deposits.length!==1) return; // seulement au tout premier dépôt
+  const users=getUsers(); const uidx=users.findIndex(u=>u.id===userId); if(uidx===-1) return;
+  const refId=users[uidx].referrerId; if(!refId) return;
+  const ridx=users.findIndex(u=>u.id===refId); if(ridx===-1) return;
+  users[ridx].balance=(users[ridx].balance||0)+AFFILIATE_BONUS;
+  users[ridx].affiliateBonus=(users[ridx].affiliateBonus||0)+AFFILIATE_BONUS;
+  users[ridx].referrals=users[ridx].referrals||[];
+  if(!users[ridx].referrals.includes(userId)) users[ridx].referrals.push(userId);
+  saveUsers(users);
+  addTransaction(refId,'affiliate',AFFILIATE_BONUS,'approved','Bonus parrainage 1er dépôt: '+users[uidx].firstname+' '+users[uidx].lastname);
+  showToast('🎉 Bonus parrainage de '+fmtMoney(AFFILIATE_BONUS)+' FCFA crédité !','success');
+}
   // ── Dashboard ──
 let bonusInterval;
 function loadDashboard(){
@@ -1324,14 +1372,23 @@ window.leekpayOnSuccess = function(data){
   const amt = window._pendingDepositAmt;
   const userId = window._pendingDepositUserId;
   if(!amt||!userId) return;
-  // Créer la transaction seulement maintenant
   const txId=genId();
   const tx={id:txId, userId, type:'deposit', amount:amt, status:'approved',
     note:'LeekPay | Confirmé', leekpayId:data?.payment_id||data?.id||txId, date:Date.now()};
-  const txs=getTransactions(); txs.push(tx); saveTransactions(txs); fbSaveTx(tx);
-  // Créditer le solde immédiatement
+  // localStorage + Firebase
+  const txs=getTransactions(); txs.push(tx);
+  localStorage.setItem('IF_transactions',JSON.stringify(txs));
+  fbSaveTx(tx);
+  // Créditer le solde
   const usrs=getUsers(); const uidx=usrs.findIndex(x=>x.id===userId);
-  if(uidx!==-1){ usrs[uidx].balance=(usrs[uidx].balance||0)+amt; saveUsers(usrs); setCurrentUser(usrs[uidx]); fbSaveUser(usrs[uidx]); }
+  if(uidx!==-1){
+    usrs[uidx].balance=(usrs[uidx].balance||0)+amt;
+    localStorage.setItem('IF_users',JSON.stringify(usrs));
+    fbSaveUser(usrs[uidx]);
+    setCurrentUser(usrs[uidx]);
+  }
+  // ✅ Bonus parrainage au 1er dépôt
+  triggerAffiliateBonus(userId);
   window._pendingDepositAmt=null; window._pendingDepositUserId=null;
   document.getElementById('depositAmount').value='';
   showAlert('depositAlert','✅ Dépôt de '+fmtMoney(amt)+' FCFA confirmé ! Solde crédité.','success');
@@ -1528,16 +1585,18 @@ function loadAdmin(){
   const cu=getCurrentUser();
   const topbarEmail=document.getElementById('adminTopbarEmail');
   if(topbarEmail && cu) topbarEmail.textContent=(cu.email||ADMIN_EMAIL)+' (Admin '+(getCurrentAdminIndex()+1)+')';
-  const users=getUsers().filter(u=>u.role!=='admin');
+  const allUsers=getUsers(); // TOUS — admins inclus
+  const members=allUsers.filter(u=>u.role!=='admin'); // membres seulement pour les stats
   const txs=getTransactions();
   const deposits=txs.filter(t=>t.type==='deposit');
   const withdrawals=txs.filter(t=>t.type==='withdrawal');
   const pending=withdrawals.filter(t=>t.status==='pending'||t.status==='pending_admin_approval');
-  document.getElementById('adminUserCount').textContent=users.length;
+  document.getElementById('adminUserCount').textContent=members.length;
   document.getElementById('adminDepTotal').textContent=fmtMoney(deposits.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
   document.getElementById('adminWithTotal').textContent=fmtMoney(withdrawals.filter(t=>t.status==='approved').reduce((s,t)=>s+t.amount,0));
   document.getElementById('adminPendingCount').textContent=pending.length;
   const wn=document.getElementById('withdrawNotif'); if(wn) wn.style.display=pending.length>0?'inline-block':'none';
+  const users=members; // alias pour compatibilité avec le reste de loadAdmin
   const rut=document.getElementById('adminRecentUsers');
   if(rut) rut.innerHTML=users.slice(-10).reverse().map(u=>`<tr>
     <td>${u.firstname} ${u.lastname}</td>
@@ -1558,30 +1617,31 @@ function loadAdmin(){
   </tr>`).join('');
   const wt=document.getElementById('adminWithdrawalsTbody');
   if(wt) wt.innerHTML=[...withdrawals].reverse().map(t=>{
-    const u=users.find(x=>x.id===t.userId)||{};
+    const u=allUsers.find(x=>x.id===t.userId)||{}; // allUsers inclut les admins
     const np=(t.note||'').split('|').map(s=>s.trim());
     const wN=np[0]||'—', wNum=np[1]||'—', wNm=np[2]||'—';
-    const isAdminW=t.status==='pending_admin_approval';
+    const isAdminW = t.status==='pending_admin_approval' || t.requestedByAdmin!==undefined;
     const currentAdminIdx=getCurrentAdminIndex();
-    const canApproveAdminW=isAdminW && currentAdminIdx !== t.requestedByAdmin;
+    const requesterIdx = t.requestedByAdmin!==undefined ? t.requestedByAdmin : (u.adminIndex??ADMIN_EMAILS.indexOf(u.email??''));
+    const canApproveAdminW = isAdminW && currentAdminIdx !== requesterIdx;
     let statusBadge='';
     if(t.status==='approved') statusBadge='<span class="badge badge-success">✅ Approuvé</span>';
-    else if(t.status==='pending') statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
-    else if(t.status==='pending_admin_approval') statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
-    else if(t.status==='processing') statusBadge='<span class="badge badge-pending">⚙️ Traitement LeekPay...</span>';
-    else if(t.status==='leekpay_failed') statusBadge='<span class="badge badge-danger">⚠️ Échec LeekPay</span>';
+    else if(t.status==='pending'&&!isAdminW) statusBadge='<span class="badge badge-pending">⏳ En attente</span>';
+    else if(isAdminW&&t.status!=='approved') statusBadge='<span class="badge" style="background:rgba(74,144,217,0.15);color:var(--accent)">🔐 Approbation admin requise</span>';
+    else if(t.status==='processing') statusBadge='<span class="badge badge-pending">⚙️ En cours...</span>';
     else statusBadge='<span class="badge badge-danger">❌ Refusé</span>';
-    const userName=isAdminW ? `<strong style="color:var(--accent)">👑 Admin ${t.requestedByAdmin+1}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||''}</span>` : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
+    const userName = isAdminW
+      ? `<strong style="color:var(--accent)">👑 Admin ${requesterIdx+1}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.requestedByEmail||u.email||''}</span>`
+      : `<strong>${u.firstname||'?'} ${u.lastname||''}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${u.email||''}</span>`;
     let actions='—';
-    if(t.status==='pending') actions=`<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>`;
-    else if(t.status==='pending_admin_approval') actions=canApproveAdminW ? `<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver + LeekPay</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>` : '<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
-    else if(t.status==='leekpay_failed') actions=`<button class="btn btn-sm btn-gold" onclick="approveWithdrawal('${t.id}')">🔄 Réessayer LeekPay</button>`;
+    if(t.status==='pending'&&!isAdminW) actions=`<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>`;
+    else if(isAdminW&&(t.status==='pending'||t.status==='pending_admin_approval')) actions=canApproveAdminW?`<div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn btn-sm btn-green" onclick="approveWithdrawal('${t.id}')">✓ Approuver</button><button class="btn btn-sm btn-danger" onclick="rejectWithdrawal('${t.id}')">✗ Refuser</button></div>`:'<span style="font-size:0.78rem;color:var(--text-muted)">⛔ Vous êtes le demandeur</span>';
     return `<tr>
       <td>${userName}</td>
       <td style="color:var(--gold);font-weight:600">${fmtMoney(t.amount)} FCFA</td>
       <td style="font-size:0.8rem"><span style="color:var(--accent2)">${wN}</span><br><span style="font-family:monospace">${wNum}</span><br><span style="color:var(--text-muted);font-size:0.74rem">${wNm}</span></td>
       <td style="font-size:0.76rem">${fmtDate(t.date)}</td>
-      <td>${statusBadge}${t.leekpayId?'<br><span style="font-size:0.68rem;color:var(--text-muted)">ID: '+t.leekpayId+'</span>':''}</td>
+      <td>${statusBadge}</td>
       <td>${actions}</td>
     </tr>`;
   }).join('');
@@ -1614,77 +1674,34 @@ function loadAdmin(){
   if(ca){ const txt=getAnnounce(); ca.textContent=txt||'Aucune annonce active'; if(txt&&document.getElementById('announceInput')) document.getElementById('announceInput').value=txt; }
 }
 
-async function approveWithdrawal(txId){
+function approveWithdrawal(txId){
   const txs=getTransactions(); const idx=txs.findIndex(t=>t.id===txId); if(idx===-1) return;
-  const t=txs[idx];
-  const cu=getCurrentUser();
+  const t=txs[idx]; const myIdx=getCurrentAdminIndex();
 
-  // Si c'est un retrait admin, vérifier qu'un AUTRE admin approuve
-  if(t.status==='pending_admin_approval'){
-    const approvingAdminIdx=getCurrentAdminIndex();
-    if(approvingAdminIdx === t.requestedByAdmin){
-      showToast('❌ Vous ne pouvez pas approuver votre propre demande de retrait. Un autre administrateur doit l\'approuver.','error');
-      return;
-    }
-    // Traitement du retrait admin — pas de déduction de solde utilisateur (admin)
-    txs[idx].status='processing'; txs[idx].approvedByAdmin=approvingAdminIdx; txs[idx].approvedAt=Date.now();
-    saveTransactions(txs); fbSaveTx({...txs[idx]});
-    const np=(t.note||'').split('|').map(s=>s.trim());
-    const wNetwork=np[0]||'', wPhone=np[1]||'', wName=np[2]||'';
-    showToast('⏳ Approbation admin enregistrée. Envoi LeekPay en cours...','info');
-    const leekResult=await leekPaySendPayment(t.id, t.amount, wNetwork, wPhone, wName, t.requestedByEmail||'', 'Admin IF');
-    const txs2=getTransactions(); const idx2=txs2.findIndex(x=>x.id===txId);
-    if(idx2!==-1){
-      txs2[idx2].status=leekResult.success?'approved':'leekpay_failed';
-      txs2[idx2].leekpayId=leekResult.leekpayId||null;
-      txs2[idx2].leekpayError=leekResult.error||null;
-      saveTransactions(txs2); fbSaveTx({...txs2[idx2]});
-    }
-    if(leekResult.success){
-      showToast('✅ Retrait admin de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement manuellement via Mobile Money.','success');
-    } else {
-      showToast('⚠️ Erreur lors de l\'approbation. Réessayez.','warning');
-    }
+  // Retrait admin — nécessite approbation d'un AUTRE admin
+  if(t.status==='pending_admin_approval'||t.requestedByAdmin!==undefined){
+    const requesterIdx=t.requestedByAdmin!==undefined?t.requestedByAdmin:-1;
+    if(myIdx===requesterIdx) return showToast('⛔ Vous ne pouvez pas approuver votre propre retrait.','error');
+    const updated={...t,status:'approved',approvedByAdmin:myIdx,approvedAt:Date.now()};
+    localStorage.setItem('IF_transactions',JSON.stringify(getTransactions().map(x=>x.id===txId?updated:x)));
+    fbSaveTx(updated);
+    showToast('✅ Retrait admin de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement manuellement.','success');
     loadAdmin(); return;
   }
 
-  // Retrait membre normal
-  const users=getUsers(); const uidx=users.findIndex(u=>u.id===t.userId);
-  if(uidx!==-1){
-    if((users[uidx].balance||0)<t.amount) return showToast('Solde utilisateur insuffisant !','error');
-    users[uidx].balance-=t.amount;
-    users[uidx].totalWithdrawn=(users[uidx].totalWithdrawn||0)+t.amount;
-    users[uidx].pendingBonus=Math.max(0,(users[uidx].pendingBonus||0)-t.amount);
-    saveUsers(users); fbSaveUser(users[uidx]);
-  }
-  txs[idx].status='processing'; saveTransactions(txs); fbSaveTx({...txs[idx],status:'processing'});
-  showToast('⏳ Retrait approuvé. Envoi LeekPay en cours...','info');
+  // Retrait membre — déduire le solde et marquer approuvé
+  const allUsers=getUsers(); const uidx=allUsers.findIndex(u=>u.id===t.userId);
+  if(uidx===-1) return showToast('Utilisateur introuvable.','error');
+  if((allUsers[uidx].balance||0)<t.amount) return showToast('Solde insuffisant !','error');
+  allUsers[uidx].balance-=t.amount;
+  allUsers[uidx].totalWithdrawn=(allUsers[uidx].totalWithdrawn||0)+t.amount;
   const np=(t.note||'').split('|').map(s=>s.trim());
-  const wNetwork=np[0]||'', wPhone=np[1]||'', wName=np[2]||'';
-  const userEmail=uidx!==-1?users[uidx].email:'';
-  const userName=uidx!==-1?(users[uidx].firstname+' '+users[uidx].lastname):'';
-  const leekResult=await leekPaySendPayment(t.id, t.amount, wNetwork, wPhone, wName, userEmail, userName);
-  const txs2=getTransactions(); const idx2=txs2.findIndex(x=>x.id===txId);
-  if(idx2!==-1){
-    txs2[idx2].status=leekResult.success?'approved':'leekpay_failed';
-    txs2[idx2].leekpayId=leekResult.leekpayId||null;
-    txs2[idx2].leekpayError=leekResult.error||null;
-    saveTransactions(txs2); fbSaveTx({...txs2[idx2]});
-  }
-  if(leekResult.success){
-    if(uidx!==-1){
-      const sent=await sendEmail('withdrawal_confirm',users[uidx].email,users[uidx].firstname+' '+users[uidx].lastname,{amount:fmtMoney(t.amount),method:np[0]||'—',txId:t.id,date:fmtDate(t.date)});
-      if(sent) console.log('[Email] Confirmation retrait envoyée');
-    }
-    showToast('✅ Retrait de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement via '+np[0]+' au '+np[1]+'.','success');
-  } else {
-    // Rembourser le solde si LeekPay a échoué
-    if(uidx!==-1){
-      const users3=getUsers(); const uidx3=users3.findIndex(u=>u.id===t.userId);
-      if(uidx3!==-1){ users3[uidx3].balance=(users3[uidx3].balance||0)+t.amount; users3[uidx3].totalWithdrawn=Math.max(0,(users3[uidx3].totalWithdrawn||0)-t.amount); saveUsers(users3); fbSaveUser(users3[uidx3]); }
-    }
-    showToast('⚠️ Erreur LeekPay : '+leekResult.error+'. Le solde a été remboursé. Vérifiez votre compte LeekPay.','warning');
-  }
+  const updated={...t,status:'approved',approvedAt:Date.now()};
+  localStorage.setItem('IF_users',JSON.stringify(allUsers));
+  localStorage.setItem('IF_transactions',JSON.stringify(getTransactions().map(x=>x.id===txId?updated:x)));
+  fbSaveUser(allUsers[uidx]);
+  fbSaveTx(updated);
+  showToast('✅ Retrait de '+fmtMoney(t.amount)+' FCFA approuvé ! Envoyez le paiement via '+np[0]+' au '+np[1]+'.','success');
   loadAdmin();
 }
 function rejectWithdrawal(txId){
@@ -1719,7 +1736,13 @@ function adminCreditUser(userId){
 }
 function adminDeleteUser(userId){
   if(!confirm('Supprimer cet utilisateur ? Action irréversible.')) return;
-  const users=getUsers().filter(u=>u.id!==userId); saveUsers(users);
+  const users=getUsers().filter(u=>u.id!==userId);
+  localStorage.setItem('IF_users',JSON.stringify(users));
+  // Supprimer de Firebase
+  if(window._db){
+    const {doc,deleteDoc}=window._fsHelpers;
+    deleteDoc(doc(window._db,'users',userId)).catch(e=>console.warn('[FB] deleteUser:',e));
+  }
   showToast('Utilisateur supprimé.','info'); loadAdmin();
 }
 function switchAdminTab(name,el){
@@ -1823,51 +1846,90 @@ window.addEventListener('load', function(){
 (function init(){
   if(!localStorage.getItem('IF_plans')) savePlans(DEFAULT_PLANS);
 
+  // Lien de parrainage depuis URL
   const urlParams=new URLSearchParams(window.location.search);
   const refParam=urlParams.get('ref');
   if(refParam){ const ri=document.getElementById('regReferral'); if(ri) ri.value=refParam; }
 
-  // Afficher la page immédiatement
-  const cu=getCurrentUser();
-  if(cu){
-    if(cu.role==='admin'){ showPage('admin'); stopMoneyRain(); }
-    else if(cu.emailVerified){ showPage('dashboard'); stopMoneyRain(); }
-    else openModal('emailVerifyModal');
-  } else { startMoneyRain(); }
+  renderLandingPlans();
+  loadAnnounce();
 
-  renderLandingPlans(); loadAnnounce();
-
-  // Charger Firebase PUIS recharger le panneau avec les vraies données
+  // ── Fonction principale de sync Firebase ──
   const doFbSync=()=>{
     fbLoadAll().then(()=>{
-      renderLandingPlans(); loadAnnounce();
-      const cu2=getCurrentUser();
-      if(cu2){
-        if(cu2.role==='admin') loadAdmin();
-        else if(cu2.emailVerified) loadDashboard();
+      renderLandingPlans();
+      loadAnnounce();
+
+      const cu=getCurrentUser();
+      if(cu){
+        if(cu.role==='admin'){
+          stopMoneyRain();
+          showPage('admin');
+          loadAdmin();
+        } else if(cu.emailVerified){
+          stopMoneyRain();
+          showPage('dashboard');
+          loadDashboard();
+        } else {
+          startMoneyRain();
+          openModal('emailVerifyModal');
+        }
+      } else {
+        startMoneyRain();
       }
-      // Démarrer le temps réel
+
+      // ── onSnapshot : temps réel entre tous les admins ──
       if(window._fsHelpers && window._db){
         const {onSnapshot,collection}=window._fsHelpers;
+
         onSnapshot(collection(window._db,'transactions'), snap=>{
+          // Firebase → localStorage UNIQUEMENT (pas saveTransactions pour éviter boucle)
           const fbTxs=[]; snap.forEach(d=>fbTxs.push(d.data()));
           const local=getTransactions(); const merged=[...local];
-          fbTxs.forEach(ft=>{ const i=merged.findIndex(t=>t.id===ft.id); if(i===-1) merged.push(ft); else merged[i]={...merged[i],...ft}; });
-          saveTransactions(merged);
-          const cu3=getCurrentUser(); if(cu3&&cu3.role==='admin') loadAdmin();
-        });
+          fbTxs.forEach(ft=>{
+            const i=merged.findIndex(t=>t.id===ft.id);
+            if(i===-1) merged.push(ft); else merged[i]={...merged[i],...ft};
+          });
+          localStorage.setItem('IF_transactions',JSON.stringify(merged));
+          const cu2=getCurrentUser();
+          if(cu2&&cu2.role==='admin') loadAdmin();
+          else if(cu2&&cu2.emailVerified) loadDashboard();
+        }, err=>console.warn('[RT] transactions:',err.message));
+
         onSnapshot(collection(window._db,'users'), snap=>{
+          // Firebase → localStorage UNIQUEMENT (pas saveUsers pour éviter boucle)
           const fbUsers=[]; snap.forEach(d=>fbUsers.push(d.data()));
           const local=getUsers(); const merged=[...local];
-          fbUsers.forEach(fu=>{ const i=merged.findIndex(u=>u.id===fu.id); if(i===-1) merged.push(fu); else{ const lu=merged[i]; if(!lu.emailVerified&&lu.emailVerifyCode) return; merged[i]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode}; } });
-          saveUsers(merged);
-          const cu3=getCurrentUser(); if(cu3&&cu3.role==='admin') loadAdmin();
-        });
+          fbUsers.forEach(fu=>{
+            const i=merged.findIndex(u=>u.id===fu.id);
+            if(i===-1) merged.push(fu);
+            else {
+              const lu=merged[i];
+              if(!lu.emailVerified&&lu.emailVerifyCode) return;
+              merged[i]={...fu,emailVerifyCode:lu.emailVerifyCode||fu.emailVerifyCode};
+            }
+          });
+          localStorage.setItem('IF_users',JSON.stringify(merged));
+          const cu2=getCurrentUser();
+          if(cu2){
+            const updated=merged.find(u=>u.id===cu2.id);
+            if(updated) setCurrentUser(updated);
+            if(cu2.role==='admin') loadAdmin();
+          }
+        }, err=>console.warn('[RT] users:',err.message));
+
+        console.log('[FB] ✅ Temps réel actif');
       }
-    });
+    }).catch(e=>console.warn('[init] fbLoadAll:',e));
   };
+
+  // Démarrer la sync dès que Firebase est prêt
   if(window._firebaseReady) doFbSync();
-  else { document.addEventListener('firebaseReady',doFbSync,{once:true}); setTimeout(doFbSync,4000); }
+  else {
+    document.addEventListener('firebaseReady', doFbSync, {once:true});
+    // Fallback : si l'événement est déjà passé
+    setTimeout(()=>{ if(!getUsers().length && window._db) doFbSync(); }, 3000);
+  }
 })();
 </script>
   <!-- ========== COMPTEURS ANIMÉS ========== -->
