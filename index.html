@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -148,7 +148,7 @@ window.ecouterCommissions = (callback) => onSnapshot(collection(db, "commissions
 window.ecouterLogs = (callback) => onSnapshot(collection(db, "logs"), snap => {
   const logs = []; snap.forEach(doc => logs.push({id: doc.id,...doc.data()})); callback(logs);
 });
-  </body>
+  </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 :root{
