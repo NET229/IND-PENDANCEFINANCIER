@@ -3072,93 +3072,64 @@ window.loadAdmin = function(){
 };
 </script>
 <!-- ========== FIN FIX RETRAIT ADMIN ========== -->
-              <script>
-let currentUser = null;
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, collection, addDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  if(window.initLogger) initLogger();
+// 1. TA CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyB7_6wGeZKhKG58v7NKJIxDFG4uOGQp6PE",
+  authDomain: "independance-financiere-14a8b.firebaseapp.com",
+  projectId: "independance-financiere-14a8b",
+  storageBucket: "independance-financiere-14a8b.appspot.com",
+  messagingSenderId: "945509027832",
+  appId: "1:945509027832:web:abcd1234efgh5678"
+};
 
-  const saved = localStorage.getItem("currentUser");
-  if(saved) {
-    currentUser = JSON.parse(saved);
-    logAction("session_reprise", {email: currentUser.email});
-    afficherDashboard();
+// 2. INIT
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// 3. REGISTER + LOGIN
+window.registerUser = async (email, password, username) => {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await addDoc(collection(db, "users"), {
+      uid: cred.user.uid,
+      email: email,
+      username: username,
+      createdAt: new Date()
+    });
+    return { success: true, user: cred.user };
+  } catch (e) {
+    return { success: false, error: e.message };
   }
+};
 
-  if(window.ecouterUsers) ecouterUsers(users => console.log("Users:", users.length));
-  if(window.ecouterCommissions) ecouterCommissions(com => console.log("Commissions:", com.length));
+window.loginUser = async (email, password) => {
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    return { success: true, user: cred.user };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+};
+
+// 4. LIGNES 146-149 CORRIGÉES
+window.ecouterCommissions = (callback) => onSnapshot(collection(db, "commissions"), snap => {
+  const com = []; snap.forEach(doc => com.push({id: doc.id,...doc.data()})); callback(com);
 });
 
-async function handleRegister() {
-  logAction("tentative_inscription", {email: document.getElementById('reg_email').value});
-  const nom = document.getElementById('reg_nom').value;
-  const email = document.getElementById('reg_email').value;
-  const tel = document.getElementById('reg_tel').value;
-  const pass = document.getElementById('reg_pass').value;
-  const codeParrain = document.getElementById('reg_codeParrain').value;
+window.ecouterLogs = (callback) => onSnapshot(collection(db, "logs"), snap => {
+  const logs = []; snap.forEach(doc => logs.push({id: doc.id,...doc.data()})); callback(logs);
+});
 
-  const res = await registerUser(nom, email, tel, pass, codeParrain);
-  if(res.success) {
-    logAction("inscription_reussie", {email, codeParrain: res.codeParrain});
-    alert("Inscription réussie! Ton code parrain: " + res.codeParrain);
-    window.location.hash = "#login";
-  } else {
-    logAction("inscription_echec", {email, erreur: res.error});
-    alert(res.error);
-  }
-}
-
-async function handleLogin() {
-  const email = document.getElementById('login_email').value;
-  logAction("tentative_connexion", {email});
-  const pass = document.getElementById('login_pass').value;
-  const res = await loginUser(email, pass);
-
-  if(res.success) {
-    currentUser = res.user;
-    logAction("connexion_reussie", {email, role: currentUser.role});
-    afficherDashboard();
-  } else {
-    logAction("connexion_echec", {email});
-    alert("Email ou mot de passe incorrect");
-  }
-}
-
-function handleLogout() {
-  if(currentUser) logAction("deconnexion", {email: currentUser.email});
-  localStorage.removeItem("currentUser");
-  currentUser = null;
-  window.location.hash = "#login";
-}
-
-function afficherDashboard() {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  if(currentUser.role === "admin") {
-    document.getElementById('adminPanel').style.display = 'block';
-  } else {
-    document.getElementById('userPanel').style.display = 'block';
-    if(document.getElementById('monCodeParrain'))
-      document.getElementById('monCodeParrain').innerText = currentUser.codeParrain;
-  }
-}
-
-async function handleInvest() {
-  const plan = document.getElementById('planSelect').value;
-  const montant = document.getElementById('montantInvest').value;
-  logAction("tentative_invest", {plan, montant});
-  await investir(currentUser.id, plan, montant);
-  logAction("invest_reussi", {plan, montant});
-  alert("Investissement enregistré");
-}
-
-async function handleRetrait() {
-  const montant = document.getElementById('montantRetrait').value;
-  const methode = document.getElementById('methodeRetrait').value;
-  const numero = document.getElementById('numeroRetrait').value;
-  logAction("demande_retrait", {montant, methode});
-  await demanderRetrait(currentUser.id, montant, methode, numero);
-  alert("Demande de retrait envoyée");
-}
-    </script>
+// 5. Test connexion
+onAuthStateChanged(auth, user => {
+  console.log(user ? "Connecté: " + user.email : "Déconnecté");
+});
+</script>
 </body>
 </html>
