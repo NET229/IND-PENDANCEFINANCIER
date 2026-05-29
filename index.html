@@ -3072,5 +3072,93 @@ window.loadAdmin = function(){
 };
 </script>
 <!-- ========== FIN FIX RETRAIT ADMIN ========== -->
+              <script>
+let currentUser = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if(window.initLogger) initLogger();
+
+  const saved = localStorage.getItem("currentUser");
+  if(saved) {
+    currentUser = JSON.parse(saved);
+    logAction("session_reprise", {email: currentUser.email});
+    afficherDashboard();
+  }
+
+  if(window.ecouterUsers) ecouterUsers(users => console.log("Users:", users.length));
+  if(window.ecouterCommissions) ecouterCommissions(com => console.log("Commissions:", com.length));
+});
+
+async function handleRegister() {
+  logAction("tentative_inscription", {email: document.getElementById('reg_email').value});
+  const nom = document.getElementById('reg_nom').value;
+  const email = document.getElementById('reg_email').value;
+  const tel = document.getElementById('reg_tel').value;
+  const pass = document.getElementById('reg_pass').value;
+  const codeParrain = document.getElementById('reg_codeParrain').value;
+
+  const res = await registerUser(nom, email, tel, pass, codeParrain);
+  if(res.success) {
+    logAction("inscription_reussie", {email, codeParrain: res.codeParrain});
+    alert("Inscription réussie! Ton code parrain: " + res.codeParrain);
+    window.location.hash = "#login";
+  } else {
+    logAction("inscription_echec", {email, erreur: res.error});
+    alert(res.error);
+  }
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login_email').value;
+  logAction("tentative_connexion", {email});
+  const pass = document.getElementById('login_pass').value;
+  const res = await loginUser(email, pass);
+
+  if(res.success) {
+    currentUser = res.user;
+    logAction("connexion_reussie", {email, role: currentUser.role});
+    afficherDashboard();
+  } else {
+    logAction("connexion_echec", {email});
+    alert("Email ou mot de passe incorrect");
+  }
+}
+
+function handleLogout() {
+  if(currentUser) logAction("deconnexion", {email: currentUser.email});
+  localStorage.removeItem("currentUser");
+  currentUser = null;
+  window.location.hash = "#login";
+}
+
+function afficherDashboard() {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  if(currentUser.role === "admin") {
+    document.getElementById('adminPanel').style.display = 'block';
+  } else {
+    document.getElementById('userPanel').style.display = 'block';
+    if(document.getElementById('monCodeParrain'))
+      document.getElementById('monCodeParrain').innerText = currentUser.codeParrain;
+  }
+}
+
+async function handleInvest() {
+  const plan = document.getElementById('planSelect').value;
+  const montant = document.getElementById('montantInvest').value;
+  logAction("tentative_invest", {plan, montant});
+  await investir(currentUser.id, plan, montant);
+  logAction("invest_reussi", {plan, montant});
+  alert("Investissement enregistré");
+}
+
+async function handleRetrait() {
+  const montant = document.getElementById('montantRetrait').value;
+  const methode = document.getElementById('methodeRetrait').value;
+  const numero = document.getElementById('numeroRetrait').value;
+  logAction("demande_retrait", {montant, methode});
+  await demanderRetrait(currentUser.id, montant, methode, numero);
+  alert("Demande de retrait envoyée");
+}
+    </script>
 </body>
 </html>
