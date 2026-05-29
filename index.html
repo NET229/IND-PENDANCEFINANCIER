@@ -8,31 +8,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://leekpay.fr/js/leekpay.js"></script>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, doc,
-  setDoc, getDoc, getDocs, addDoc,
-  updateDoc, deleteDoc,
-  query, where, orderBy,
-  onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, getDocs, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7_6wGeZKhKG58v7NKJIxDFG4uOGQp6PE",
-  authDomain: "independance-financier.firebaseapp.com",
-  databaseURL: "https://independance-financier-default-rtdb.firebaseio.com",
-  projectId: "independance-financier",
-  storageBucket: "independance-financier.firebasestorage.app",
-  messagingSenderId: "945509783220",
-  appId: "1:945509783220:web:3121fe1d1b04de8f4de9e1",
-  measurementId: "G-EQ2HYBBHFQ"
+  authDomain: "independance-financiere-14a8b.firebaseapp.com",
+  projectId: "independance-financiere-14a8b",
+  storageBucket: "independance-financiere-14a8b.appspot.com",
+  messagingSenderId: "945509027832",
+  appId: "1:945509027832:web:abcd1234efgh5678"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-window._db = db;
-window._fsHelpers = { collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp };
 
 const ADMINS = [
   "adminindependancefinancier@gmail.com",
@@ -40,109 +29,125 @@ const ADMINS = [
   "adminindependancefinancier3@gmail.com"
 ];
 
-window.registerUser = async function(nom, email, tel, password) {
-  try {
-    const id = Date.now().toString();
-    const emailLower = email.toLowerCase();
-    const role = ADMINS.includes(emailLower)? "admin" : "user";
+function genererCodeParrain() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = 'IF';
+  for(let i=0; i<8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+  return code;
+}
 
-    await setDoc(doc(db, "users", id), {
-      id: id,
-      nom: nom,
-      email: email,
-      tel: tel,
-      password: password,
-      solde: 0,
-      gains: 0,
-      plan: "Aucun",
-      role: role,
-      emailVerified: false,
-      kyc: "non_verifie",
-      date_inscription: serverTimestamp(),
-      source: "site"
-    });
-    console.log(" User créé:", id, "Role:", role);
-    return { success: true, id: id, role: role };
-  } catch(e) {
-    console.error(" Erreur inscription:", e);
-    return { success: false, error: e.message };
+async function codeExiste(code) {
+  const q = query(collection(db, "users"), where("codeParrain", "==", code));
+  const snap = await getDocs(q);
+  return!snap.empty;
+}
+
+window.registerUser = async function(nom, email, tel, password, codeParrainSaisi) {
+  let parrainId = null;
+  if(codeParrainSaisi && codeParrainSaisi.trim()!== '') {
+    const q = query(collection(db, "users"), where("codeParrain", "==", codeParrainSaisi.toUpperCase()));
+    const snap = await getDocs(q);
+    if(!snap.empty) {
+      parrainId = snap.docs[0].id;
+    } else {
+      return {success:false, error:"Code parrain invalide"};
+    }
   }
-}[Firebase]
+  let monCode = genererCodeParrain();
+  while(await codeExiste(monCode)) monCode = genererCodeParrain();
+
+  const userData = {
+    nom, email, telephone: tel, password,
+    role: ADMINS.includes(email.toLowerCase())? "admin" : "user",
+    solde: 0, gains: 0, plan: null, dateInscription: serverTimestamp(),
+    codeParrain: monCode, parrainId: parrainId,
+    codeParrainUtilise: codeParrainSaisi? codeParrainSaisi.toUpperCase() : null,
+    verifie: false, bloque: false, bonusParrainageRecu: false
+  };
+  const ref = await addDoc(collection(db, "users"), userData);
+  return {success:true, userId: ref.id, codeParrain: monCode};
+}
+
+window.loginUser = async function(email, password) {
+  const q = query(collection(db, "users"), where("email", "==", email), where("password", "==", password));
+  const snap = await getDocs(q);
+  if(snap.empty) return {success:false};
+  const user = {id: snap.docs[0].id,...snap.docs[0].data()};
+  localStorage.setItem("currentUser", JSON.stringify(user));
+  return {success:true, user};
+}
+
+window.investir = async function(userId, plan, montant) {
+  montant = Number(montant);
+  await addDoc(collection(db, "investissements"), {
+    userId, plan, montant, date: serverTimestamp(), statut: "actif"
+  });
+  await updateDoc(doc(db, "users", userId), {plan: plan});
+
+  if(montant >= 1000) {
+    const userSnap = await getDocs(query(collection(db, "users"), where("__name__", "==", userId)));
+    if(!userSnap.empty) {
+      const userData = userSnap.docs[0].data();
+      if(userData.parrainId && userData.bonusParrainageRecu === false) {
+        await addDoc(collection(db, "commissions"), {
+          userId: userData.parrainId, filleulId: userId, montant: 500,
+          date: serverTimestamp(), type: "parrainage", condition: "1er depot >= 1000F"
+        });
+        await updateDoc(doc(db, "users", userId), {bonusParrainageRecu: true});
+      }
+    }
+  }
+}
 
 window.demanderRetrait = async function(userId, montant, methode, numero) {
-  try {
-    await addDoc(collection(db, "withdrawals"), {
-      userId: userId,
-      montant: Number(montant),
-      methode: methode,
-      numero: numero,
-      statut: "pending",
-      date_demande: serverTimestamp()
-    });
-    console.log(" Retrait demandé");
-    return { success: true };
-  } catch(e) {
-    console.error(" Erreur retrait:", e);
-    return { success: false, error: e.message };
-  }
-}[Firebase]
+  await addDoc(collection(db, "retraits"), {
+    userId, montant: Number(montant), methode, numero,
+    date: serverTimestamp(), statut: "en_attente"
+  });
+}
 
-window.investir = async function(userId, planNom, montant) {
+window.logAction = async function(action, details = {}) {
   try {
-    await addDoc(collection(db, "transactions"), {
-      userId: userId,
-      type: "investissement",
-      plan: planNom,
-      montant: Number(montant),
-      statut: "actif",
+    const user = JSON.parse(localStorage.getItem("currentUser") || 'null');
+    await addDoc(collection(db, "logs"), {
+      userId: user? user.id : "guest",
+      email: user? user.email : "guest",
+      action, details,
+      page: window.location.hash || "accueil",
+      userAgent: navigator.userAgent,
       date: serverTimestamp()
     });
-    await updateDoc(doc(db, "users", userId), {
-      plan: planNom,
-      dernier_invest: serverTimestamp()
-    });
-    console.log(" Investissement créé");
-    return { success: true };
-  } catch(e) {
-    console.error(" Erreur investissement:", e);
-    return { success: false, error: e.message };
-  }
-}[Firebase]
+  } catch(e) { console.log("Erreur log:", e); }
+}
 
-onSnapshot(collection(db, 'transactions'), snap => {
-  const data = [];
-  snap.forEach(d => data.push({ id: d.id,...d.data() }));
-  localStorage.setItem('IF_transactions', JSON.stringify(data));
-  const cu = JSON.parse(sessionStorage.getItem('IF_currentUser') || 'null');
-  if (cu?.role === 'admin' && typeof loadAdmin === 'function') loadAdmin();
-  else if (cu?.emailVerified && typeof loadDashboard === 'function') loadDashboard();
-});
-
-onSnapshot(collection(db, 'users'), snap => {
-  const data = [];
-  snap.forEach(d => data.push({ id: d.id,...d.data() }));
-  localStorage.setItem('IF_users', JSON.stringify(data));
-  try {
-    const s = sessionStorage.getItem('IF_currentUser');
-    if (s) {
-      const cu = JSON.parse(s);
-      const updated = data.find(u => u.id === cu.id);
-      if (updated) sessionStorage.setItem('IF_currentUser', JSON.stringify(updated));
-      if (cu.role === 'admin' && typeof loadAdmin === 'function') loadAdmin();
+window.initLogger = function() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button, a, [onclick]');
+    if(btn) {
+      const label = btn.innerText || btn.id || btn.className || "clic";
+      logAction("clic", {element: label, id: btn.id});
     }
-  } catch(e) {}
-});
+  });
+  window.addEventListener('hashchange', () => {
+    logAction("changement_page", {page: window.location.hash});
+  });
+}
 
-onSnapshot(collection(db, 'withdrawals'), snap => {
-  const data = [];
-  snap.forEach(d => data.push({ id: d.id,...d.data() }));
-  localStorage.setItem('IF_withdrawals', JSON.stringify(data));
-  if (typeof loadAdmin === 'function') loadAdmin();
+window.ecouterUsers = (callback) => onSnapshot(collection(db, "users"), snap => {
+  const users = []; snap.forEach(doc => users.push({id: doc.id,...doc.data()})); callback(users);
 });
-
-window._firebaseReady = true;
-document.dispatchEvent(new Event('firebaseReady'));
-console.log(' OK Projet independance-financier connecté - Admins:', ADMINS.length);[Firebase]
+window.ecouterInvest = (callback) => onSnapshot(collection(db, "investissements"), snap => {
+  const inv = []; snap.forEach(doc => inv.push({id: doc.id,...doc.data()})); callback(inv);
+});
+window.ecouterRetraits = (callback) => onSnapshot(collection(db, "retraits"), snap => {
+  const ret = []; snap.forEach(doc => ret.push({id: doc.id,...doc.data()})); callback(ret);
+});
+window.ecouterCommissions = (callback) => onSnapshot(collection(db, "commissions"), snap => {
+  const com = []; snap.forEach(doc => com.push({id: doc.id,...doc.data()})); callback(com);
+});
+window.ecouterLogs = (callback) => onSnapshot(collection(db, "logs"), snap => {
+  const logs = []; snap.forEach(doc => logs.push({id: doc.id,...doc.data()})); callback(logs);
+});
   </body>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
