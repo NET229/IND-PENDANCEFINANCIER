@@ -2885,5 +2885,56 @@ if (!db || !auth) {
 }
 </script>
 
+<!-- ══ BOUTON WHATSAPP + MAIL FLOTTANTS ══════════════════════ -->
+<div style="
+  position:fixed;bottom:2rem;left:1.5rem;
+  display:flex;flex-direction:column;gap:.75rem;
+  z-index:9000;
+">
+  <!-- WhatsApp -->
+  <a href="https://wa.me/2290145838912"
+     target="_blank" rel="noopener noreferrer"
+     title="Contactez-nous sur WhatsApp"
+     style="
+       display:flex;align-items:center;gap:.6rem;
+       background:#25D366;color:#fff;
+       padding:.65rem 1.1rem;border-radius:50px;
+       font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;
+       text-decoration:none;
+       box-shadow:0 4px 18px rgba(37,211,102,.45);
+       transition:all .25s;
+     "
+     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,211,102,.55)'"
+     onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 18px rgba(37,211,102,.45)'"
+  >
+    <!-- Logo WhatsApp SVG officiel -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="#fff">
+      <path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.738 5.49 2.027 7.8L0 32l8.418-2.005A15.93 15.93 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm0 29.333a13.27 13.27 0 01-6.77-1.853l-.484-.287-5.003 1.193 1.22-4.867-.317-.5A13.267 13.267 0 012.667 16C2.667 8.636 8.636 2.667 16 2.667S29.333 8.636 29.333 16 23.364 29.333 16 29.333zm7.27-9.87c-.398-.2-2.355-1.162-2.72-1.295-.365-.133-.63-.2-.896.2-.265.397-1.03 1.295-1.262 1.56-.233.266-.465.3-.863.1-.398-.2-1.68-.62-3.2-1.977-1.183-1.056-1.98-2.36-2.213-2.757-.233-.398-.025-.613.175-.81.18-.178.398-.465.597-.698.2-.232.266-.398.398-.664.133-.265.067-.498-.033-.698-.1-.2-.896-2.16-1.228-2.957-.323-.776-.65-.67-.896-.683l-.763-.013c-.265 0-.697.1-1.062.498-.365.398-1.394 1.362-1.394 3.32s1.428 3.85 1.628 4.116c.2.265 2.81 4.29 6.81 6.016.952.41 1.695.656 2.275.84.956.304 1.826.26 2.514.158.767-.114 2.355-.963 2.688-1.893.333-.93.333-1.727.233-1.893-.1-.166-.365-.266-.763-.465z"/>
+    </svg>
+    WhatsApp
+  </a>
+
+  <!-- Mail -->
+  <a href="mailto:adminindependancefinancier@gmail.com"
+     title="Contactez-nous par email"
+     style="
+       display:flex;align-items:center;gap:.6rem;
+       background:#EA4335;color:#fff;
+       padding:.65rem 1.1rem;border-radius:50px;
+       font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;
+       text-decoration:none;
+       box-shadow:0 4px 18px rgba(234,67,53,.4);
+       transition:all .25s;
+     "
+     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(234,67,53,.55)'"
+     onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 18px rgba(234,67,53,.4)'"
+  >
+    <!-- Logo Gmail SVG -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="#fff">
+      <path d="M2.667 6.667h26.666C30.8 6.667 32 7.867 32 9.333v13.334C32 24.133 30.8 25.333 29.333 25.333H2.667C1.2 25.333 0 24.133 0 22.667V9.333C0 7.867 1.2 6.667 2.667 6.667zm13.333 9.6L2.667 9.2v13.467h26.666V9.2L16 16.267zM3.6 8l12.4 8.133L28.4 8H3.6z"/>
+    </svg>
+    Email
+  </a>
+  </div>
 </body>
 </html>
