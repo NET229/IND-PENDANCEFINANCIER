@@ -372,27 +372,36 @@ h1 .acc{color:var(--gold)}
     <div class="hero-in">
       <div class="hbadge">🌱 Plateforme d'investissement sécurisée</div>
       <h1>Construisez votre<br><span class="acc">Indépendance</span> Financière</h1>
-      <p class="hsub">Investissez dans nos parcelles, générez des revenus quotidiens automatiques et multipliez vos gains grâce au parrainage.</p>
+      <p class="hsub">Activez votre profil, construisez votre réseau Indépendant et multipliez vos gains grâce au système de parrainage.</p>
       <div class="hcta">
         <button class="btn btn-gold btn-lg" onclick="openAuth('register')">Commencer maintenant</button>
-        <button class="btn btn-ghost btn-lg" onclick="document.getElementById('lp').scrollIntoView({behavior:'smooth'})">Voir les parcelles</button>
+        
       </div>
       <div class="hstats">
         <div class="hstat"><div class="hstat-n">5K+</div><div class="hstat-l">Membres actifs</div></div>
         <div class="hstat"><div class="hstat-n">98%</div><div class="hstat-l">Satisfaction</div></div>
         <div class="hstat"><div class="hstat-n">24H</div><div class="hstat-l">Paiements rapides</div></div>
-        <div class="hstat"><div class="hstat-n">500F</div><div class="hstat-l">Bonus parrainage</div></div>
+        <div class="hstat"><div class="hstat-n">2500F</div><div class="hstat-l">Activation réseau</div></div>
       </div>
     </div>
   </section>
 
   <section class="lsec" id="lp">
-    <h2 class="stitle">Nos <span style="color:var(--gold)">Parcelles</span></h2>
-    <p class="ssub">Choisissez le plan correspondant à vos objectifs d'investissement</p>
-    <div class="pgrid" id="land-pgrid">
-      <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)">
-        Chargement des parcelles…
-      </div>
+    <h2 class="stitle">Tableau des <span style="color:var(--gold)">Niveaux Indépendant</span></h2>
+    <p class="ssub">Plus vous invitez, plus vous gagnez — 12 niveaux, des gains illimités</p>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.83rem;max-width:900px;margin:0 auto">
+        <thead>
+          <tr style="background:rgba(201,168,76,.08);text-transform:uppercase;font-size:.68rem;color:var(--muted);letter-spacing:.8px">
+            <th style="padding:.75rem 1rem;text-align:left">Niveau</th>
+            <th style="padding:.75rem 1rem;text-align:center">Invités</th>
+            <th style="padding:.75rem 1rem;text-align:center">Gains/invité</th>
+            <th style="padding:.75rem 1rem;text-align:center">Gains totaux</th>
+            <th style="padding:.75rem 1rem;text-align:center">Profits</th>
+          </tr>
+        </thead>
+        <tbody id="land-levels-tbody"></tbody>
+      </table>
     </div>
   </section>
 
@@ -413,8 +422,8 @@ h1 .acc{color:var(--gold)}
         </div>
         <div class="sit">
           <div class="snum">3</div>
-          <h3>Achetez une parcelle</h3>
-          <p>Choisissez la parcelle selon votre budget et commencez à investir.</p>
+          <h3>Activez votre profil</h3>
+          <p>Payez les frais d'activation (2 500 F) et rejoignez le réseau Indépendant.</p>
         </div>
         <div class="sit">
           <div class="snum">4</div>
@@ -429,7 +438,7 @@ h1 .acc{color:var(--gold)}
     <div style="font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--gold);margin-bottom:.5rem">
       INDÉPENDANCE FINANCIER
     </div>
-    <p>© 2024 Indépendance Financier. Tous droits réservés. Investissez de manière responsable.</p>
+    <p>© 2025 Indépendance Financier. Tous droits réservés. Investissez de manière responsable.</p>
   </div>
 </div>
 <!-- ══ AUTH MODAL ════════════════════════════════════════════ -->
@@ -467,7 +476,7 @@ h1 .acc{color:var(--gold)}
         <label>Code de parrainage (optionnel)</label>
         <input type="text" id="rg-ref" placeholder="Ex: ABC12345" style="text-transform:uppercase">
         <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem">
-          💡 Entrez le code de votre parrain pour lui offrir 500 F lors de votre premier dépôt
+          💡 Entrez le code de votre parrain pour qu'il reçoive un bonus lors de votre activation
         </div>
       </div>
       <div class="ferr" id="rg-err"></div>
@@ -556,7 +565,7 @@ h1 .acc{color:var(--gold)}
   <div class="mbox">
     <button class="mclose" onclick="closeM('mAR')">✕</button>
     <h3 style="font-family:'Playfair Display',serif;font-size:1.27rem;margin-bottom:.3rem">Demande de retrait admin</h3>
-    <p style="color:var(--muted);font-size:.84rem;margin-bottom:1.4rem">Requiert l'approbation des 2 autres administrateurs</p>
+    <p style="color:var(--muted);font-size:.84rem;margin-bottom:1.4rem">Requiert votre confirmation pour traitement</p>
     <div class="fg"><label>Montant (XOF) *</label><input type="number" id="ar-m" placeholder="Montant" min="1000"></div>
     <div class="fg">
       <label>Méthode *</label>
@@ -569,7 +578,7 @@ h1 .acc{color:var(--gold)}
     </div>
     <div class="fg"><label>Numéro / Coordonnées *</label><input type="text" id="ar-co" placeholder="Numéro Mobile Money ou IBAN"></div>
     <div class="fg"><label>Motif *</label><input type="text" id="ar-mo" placeholder="Ex: Frais de gestion"></div>
-    <div class="ibox">⚠️ Cette demande sera soumise aux 2 autres admins pour validation avant tout traitement.</div>
+    <div class="ibox">⚠️ Confirmez votre demande de retrait administrateur.</div>
     <button class="btn btn-gold btn-full" onclick="submitAR()">Soumettre la demande</button>
   </div>
 </div>
@@ -637,17 +646,51 @@ const FB_CFG = {
 // ║       👑 EMAILS ADMINISTRATEURS (détection auto)        ║
 // ╚══════════════════════════════════════════════════════════╝
 const ADMIN_EMAILS = [
-  "adminindependancefinancier@gmail.com",
-  "adminindependancefinancier2@gmail.com",
-  "adminindependancefinancier3@gmail.com"
+  "adminindependancefinancier@gmail.com"
 ];
+
+// ── FRAIS & ACTIVATION ────────────────────────────────────
+const ACTIVATION_MONTANT = 2500; // Frais d'activation du profil
+const FRAIS_SITE         = 500;  // Frais retenus par le site
+const MONTANT_NET_PARRAIN = ACTIVATION_MONTANT - FRAIS_SITE; // 2000F versés au parrain
 
 // ╔══════════════════════════════════════════════════════════╗
 // ║              💳 LEEKPAY CONFIGURATION                   ║
 // ╚══════════════════════════════════════════════════════════╝
 const LEEKPAY_PK   = "pk_live_YsiSAzXEBo6Y2UWHBVBjNXUmChbv59k7";
 const LEEKPAY_DEV  = "XOF";
-const PARRAINAGE_BONUS = 500;
+
+// ── NIVEAUX INDÉPENDANT ───────────────────────────────────
+const INDEPENDANT_LEVELS = [
+  { num:1,  nom:'Débutant',    invites:2,    gains_par_invite:2000,    gains_totaux:4000,       mise_a_niveau:1000,    profits:3000,       couleur:'#3B82F6' },
+  { num:2,  nom:'Influenceur', invites:4,    gains_par_invite:1000,    gains_totaux:4000,       mise_a_niveau:2000,    profits:2000,       couleur:'#6366F1' },
+  { num:3,  nom:'Archiveur',   invites:8,    gains_par_invite:2000,    gains_totaux:16000,      mise_a_niveau:4000,    profits:12000,      couleur:'#10B981' },
+  { num:4,  nom:'Ambassadeur', invites:16,   gains_par_invite:4000,    gains_totaux:64000,      mise_a_niveau:8000,    profits:56000,      couleur:'#F59E0B' },
+  { num:5,  nom:'Pionnier',    invites:32,   gains_par_invite:8000,    gains_totaux:256000,     mise_a_niveau:16000,   profits:240000,     couleur:'#EF4444' },
+  { num:6,  nom:'Mentor',      invites:64,   gains_par_invite:16000,   gains_totaux:1024000,    mise_a_niveau:32000,   profits:992000,     couleur:'#8B5CF6' },
+  { num:7,  nom:'Champion',    invites:126,  gains_par_invite:32000,   gains_totaux:4096000,    mise_a_niveau:64000,   profits:4032000,    couleur:'#EC4899' },
+  { num:8,  nom:'Directeur',   invites:256,  gains_par_invite:64000,   gains_totaux:16384000,   mise_a_niveau:128000,  profits:16256000,   couleur:'#14B8A6' },
+  { num:9,  nom:'Titan',       invites:512,  gains_par_invite:128000,  gains_totaux:65536000,   mise_a_niveau:256000,  profits:65280000,   couleur:'#F97316' },
+  { num:10, nom:'Icône',       invites:1024, gains_par_invite:256000,  gains_totaux:262144000,  mise_a_niveau:512000,  profits:261632000,  couleur:'#06B6D4' },
+  { num:11, nom:'Légende',     invites:2048, gains_par_invite:512000,  gains_totaux:1048576000, mise_a_niveau:1024000, profits:1047552000, couleur:'#A855F7' },
+  { num:12, nom:'Empereur',    invites:4096, gains_par_invite:1024000, gains_totaux:4194304000, mise_a_niveau:0,       profits:4194304000, couleur:'#EAB308' },
+];
+
+function getIndependantLevel(nbFilleuls) {
+  let level = null;
+  for (let i = INDEPENDANT_LEVELS.length - 1; i >= 0; i--) {
+    if (nbFilleuls >= INDEPENDANT_LEVELS[i].invites) {
+      level = INDEPENDANT_LEVELS[i];
+      break;
+    }
+  }
+  return level;
+}
+
+function calcBonusParrain(nbFilleuls) {
+  const lvl = getIndependantLevel(nbFilleuls);
+  return lvl ? lvl.gains_par_invite : MONTANT_NET_PARRAIN;
+}
 
 // ── INIT FIREBASE (obligatoire) ───────────────────────────
 let app, db, auth, analytics;
@@ -996,28 +1039,30 @@ async function getParcs(activeOnly = false) {
   }, 'Impossible de charger les parcelles.');
 }
 
-async function loadLandParcs() {
-  const g = $('land-pgrid');
-  try {
-    const ps = await getParcs(true);
-    if (!ps.length) {
-      g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)">Aucune parcelle disponible pour le moment.</div>';
-      return;
-    }
-    g.innerHTML = ps.map(p => `
-      <div class="pcard" style="--cc:${p.couleur||'#C9A84C'}" onclick="openAuth('register')">
-        <div style="font-size:2rem;margin-bottom:.7rem">${p.icone||'🌿'}</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.08rem;margin-bottom:.35rem">${p.nom}</div>
-        <div style="font-size:1.35rem;font-weight:700;color:var(--gold);margin-bottom:.35rem">${fmt(p.prix)}</div>
-        <div style="font-size:.8rem;color:var(--muted)">
-          <span style="color:var(--green);font-weight:600">${fmt(p.bonus_quotidien)}/jour</span>
-          — ${p.duree||30} jours
+// Charger le tableau Indépendant sur la landing
+function loadLandLevels() {
+  const tb = $('land-levels-tbody');
+  if (!tb) return;
+  const preview = INDEPENDANT_LEVELS.slice(0, 12);
+  tb.innerHTML = preview.map((l, i) => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,.04);${i % 2 === 0 ? 'background:rgba(255,255,255,.01)' : ''}">
+      <td style="padding:.68rem 1rem">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <div style="width:24px;height:24px;border-radius:50%;background:${l.couleur}33;border:1.5px solid ${l.couleur};display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:${l.couleur}">${l.num}</div>
+          <span style="font-weight:600;color:var(--text)">${l.nom}</span>
         </div>
-        ${p.description ? `<div style="font-size:.77rem;color:var(--muted);margin-top:.4rem">${p.description}</div>` : ''}
-      </div>`).join('');
-  } catch(e) {
-    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)">Erreur de chargement. Vérifiez votre connexion.</div>';
-  }
+      </td>
+      <td style="padding:.68rem 1rem;text-align:center;color:var(--text)">${l.invites.toLocaleString('fr-FR')}</td>
+      <td style="padding:.68rem 1rem;text-align:center;color:var(--green);font-weight:600">${fmt(l.gains_par_invite)}</td>
+      <td style="padding:.68rem 1rem;text-align:center;color:#a78bfa;font-weight:600">${fmt(l.gains_totaux)}</td>
+      <td style="padding:.68rem 1rem;text-align:center;color:var(--green);font-weight:700">${fmt(l.profits)}</td>
+    </tr>`).join('');
+}
+
+async function loadLandParcs() {
+  loadLandLevels();
+  const g = $('land-pgrid');
+  if (g) g.innerHTML = ''; // plus de grille parcelles
 }
 
 // ╔══════════════════════════════════════════════════════════╗
@@ -1032,9 +1077,8 @@ const ni = (id, ico, lbl) =>
 function buildUserSB() {
   $('sbnav').innerHTML =
     ni('u-dash',  '📊', 'Tableau de bord')  +
-    ni('u-dep',   '💰', 'Déposer')           +
-    ni('u-parc',  '🌿', 'Acheter parcelle')  +
-    ni('u-mparc', '📋', 'Mes parcelles')     +
+    ni('u-dep',   '💰', 'Activation')        +
+    
     ni('u-ret',   '🏦', 'Retrait')           +
     ni('u-para',  '👥', 'Parrainage')        +
     ni('u-tx',    '📜', 'Historique')        +
@@ -1054,9 +1098,7 @@ function buildAdmSB() {
     ni('adm-kyc',      '🪪', 'KYC en attente')    +
     '<div class="nsep">PARAMÈTRES</div>'           +
     ni('adm-parcs',    '🌿', 'Gérer les parcelles')+
-    ni('adm-aret',     '💎', 'Retraits admins')    +
     '<div class="nsep">MONITORING</div>'           +
-    ni('adm-allparc',  '📋', 'Toutes les parcelles')+
     ni('adm-logs',     '📜', 'Journal complet');
 }
 
@@ -1076,21 +1118,20 @@ function updKYCBadge(st) {
 
 const PAGE_TITLES = {
   'u-dash':  'Tableau de bord',       'u-dep':       'Déposer',
-  'u-parc':  'Acheter une parcelle',  'u-mparc':     'Mes Parcelles',
+  
   'u-ret':   'Retrait',               'u-para':      'Parrainage',
   'u-tx':    'Historique',            'u-kyc':       'Vérification KYC',
   'u-prof':  'Mon profil',
   'adm-dash':     "Vue d'ensemble",   'adm-users':   'Utilisateurs',
   'adm-deps':     'Dépôts en attente','adm-rets':    'Retraits en attente',
   'adm-kyc':      'KYC en attente',   'adm-parcs':   'Gérer les parcelles',
-  'adm-aret':     'Retraits admins',  'adm-allparc': 'Toutes les parcelles',
+  
   'adm-logs':     'Journal complet'
 };
 
 const PAGE_LOADERS = {
   'u-dash':      () => loadUDash(),
-  'u-parc':      () => renderBuyGrid(),
-  'u-mparc':     () => loadMParc(),
+  
   'u-tx':        () => loadTxHist(),
   'u-para':      () => loadPara(),
   'u-ret':       () => loadRet(),
@@ -1100,8 +1141,7 @@ const PAGE_LOADERS = {
   'adm-rets':    () => loadAdmRets(),
   'adm-kyc':     () => loadAdmKYC(),
   'adm-parcs':   () => loadAdmParcs(),
-  'adm-aret':    () => loadAdmAret(),
-  'adm-allparc': () => loadAdmAllParc(),
+  
   'adm-logs':    () => loadAdmLogs()
 };
 
@@ -1137,10 +1177,10 @@ function buildUserPages() {
 <!-- DASHBOARD -->
 <div class="pg" id="u-dash">
   <div class="scards">
-    <div class="sc"><div class="sc-l">Solde Principal</div><div class="sc-v g" id="us-sol">—</div><div class="sc-s">Disponible au retrait</div></div>
+    <div class="sc"><div class="sc-l">Solde Disponible</div><div class="sc-v g" id="us-sol">—</div><div class="sc-s">Disponible au retrait</div></div>
     <div class="sc"><div class="sc-l">Bonus Accumulés</div><div class="sc-v gr" id="us-bon">—</div><div class="sc-s">Parcelles + parrainage</div></div>
-    <div class="sc"><div class="sc-l">Total Déposé</div><div class="sc-v" id="us-dep">—</div><div class="sc-s">Cumul validé</div></div>
-    <div class="sc"><div class="sc-l">Filleuls</div><div class="sc-v bl" id="us-fil">—</div><div class="sc-s">Parrainés actifs</div></div>
+    <div class="sc"><div class="sc-l">Profil</div><div class="sc-v" id="us-dep">—</div><div class="sc-s" id="us-profil-st">—</div></div>
+    <div class="sc"><div class="sc-l">Filleuls</div><div class="sc-v bl" id="us-fil">—</div><div class="sc-s" id="us-lvl">Niveau Indépendant</div></div>
   </div>
   <div class="g2">
     <div class="ttable">
@@ -1160,20 +1200,25 @@ function buildUserPages() {
   </div>
 </div>
 
-<!-- DEPOT (via LeekPay) -->
+<!-- DEPOT / ACTIVATION (via LeekPay) -->
 <div class="pg" id="u-dep">
   <div class="fbox">
-    <h3>Effectuer un dépôt</h3>
-    <p>Paiement sécurisé via LeekPay (MTN Mobile Money, Moov, carte…). Crédit immédiat après confirmation.</p>
-    <div class="fg">
-      <label>Montant (XOF) *</label>
-      <input type="number" id="d-m" placeholder="Minimum : 1 000 F" min="1000" step="500">
+    <h3>Activation du profil</h3>
+    <p>Pour activer votre profil et rejoindre le réseau Indépendant, un paiement unique de <strong style="color:var(--gold)">2 500 F</strong> est requis.</p>
+    <div style="background:var(--dark3);border-radius:8px;padding:1rem;margin-bottom:1.1rem;font-size:.88rem;line-height:1.9">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Frais d'activation :</span><strong style="color:var(--gold)">2 500 F</strong></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Frais du site :</span><strong style="color:var(--red)">500 F</strong></div>
+      <div style="border-top:1px solid var(--border);margin-top:.5rem;padding-top:.5rem;display:flex;justify-content:space-between">
+        <span style="color:var(--muted)">Crédit à votre parrain :</span><strong style="color:var(--green)">2 000 F</strong>
+      </div>
     </div>
+    <input type="hidden" id="d-m" value="2500">
+    <div id="dep-statut-box"></div>
     <div class="ibox blue">
-      💳 Le paiement s'effectue via <strong>LeekPay</strong>. Votre solde sera crédité automatiquement dès confirmation du paiement.
+      💳 Paiement sécurisé via <strong>LeekPay</strong>. Votre profil sera activé automatiquement après confirmation.
     </div>
-    <button class="btn btn-gold btn-full" onclick="initLeekPay()">
-      💳 Payer avec LeekPay
+    <button class="btn btn-gold btn-full" id="btn-activer" onclick="initLeekPay()">
+      💳 Activer mon profil — 2 500 F
     </button>
   </div>
 </div>
@@ -1181,20 +1226,12 @@ function buildUserPages() {
 <!-- ACHETER PARCELLE -->
 <div class="pg" id="u-parc">
   <p style="color:var(--muted);font-size:.87rem;margin-bottom:1.4rem">
-    Investissez dans une parcelle pour générer des revenus quotidiens automatiques. Déduites de votre solde immédiatement.
+    Construisez votre réseau Indépendant et gagnez à chaque parrainage activé.
   </p>
   <div class="bgrid" id="u-bgrid"></div>
 </div>
 
-<!-- MES PARCELLES -->
-<div class="pg" id="u-mparc">
-  <div id="u-mplist">
-    <div class="empty"><div class="eico">🌿</div><h3>Aucune parcelle</h3>
-      <p>Achetez votre première parcelle pour commencer à gagner</p>
-      <button class="btn btn-gold" style="margin-top:1rem" onclick="showPg('u-parc')">Acheter une parcelle</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- RETRAIT -->
 <div class="pg" id="u-ret">
@@ -1222,22 +1259,50 @@ function buildUserPages() {
 
 <!-- PARRAINAGE -->
 <div class="pg" id="u-para">
-  <div class="scards" style="grid-template-columns:repeat(3,1fr)">
+  <!-- Stats rapides -->
+  <div class="scards" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr))">
     <div class="sc"><div class="sc-l">Code parrainage</div><div class="rcode" id="p-code" style="font-size:1.35rem">------</div></div>
     <div class="sc"><div class="sc-l">Total filleuls</div><div class="sc-v g" id="p-tot">—</div></div>
     <div class="sc"><div class="sc-l">Gains parrainage</div><div class="sc-v gr" id="p-gai">—</div></div>
+    <div class="sc"><div class="sc-l">Niveau actuel</div><div class="sc-v ye" id="p-lvl">—</div></div>
   </div>
-  <div class="rbox">
-    <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.45rem">Votre lien de parrainage</h3>
+
+  <!-- Lien de parrainage -->
+  <div class="rbox" style="margin-bottom:1.4rem">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:.45rem">🔗 Votre lien de parrainage</h3>
     <div class="rlink" id="p-link">Chargement…</div>
     <button class="btn btn-gold btn-sm" style="margin-top:.65rem" onclick="copyRef()">📋 Copier le lien</button>
-    <p style="font-size:.82rem;color:var(--muted);margin-top:.75rem">
-      Pour chaque filleul inscrit via votre lien <strong>qui effectue son premier dépôt</strong>,
-      vous recevrez <strong style="color:var(--gold)">500 F</strong> automatiquement.
-    </p>
   </div>
+
+  <!-- Niveau actuel + progression -->
+  <div id="p-niveau-box" style="margin-bottom:1.4rem"></div>
+
+  <!-- Tableau des niveaux Indépendant -->
+  <div class="ttable" style="margin-bottom:1.4rem">
+    <div class="ttable-title" style="display:flex;align-items:center;gap:.6rem">
+      🏆 Tableau des Niveaux Indépendant
+      <span style="font-size:.75rem;color:var(--muted);font-weight:400;margin-left:auto">Travaillez, accompagnez, dupliquez et récoltez !</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead>
+          <tr style="background:rgba(255,255,255,.03);text-transform:uppercase;font-size:.68rem;color:var(--muted);letter-spacing:.8px">
+            <th style="padding:.75rem 1rem;text-align:left">Niveau</th>
+            <th style="padding:.75rem 1rem;text-align:center">Invités</th>
+            <th style="padding:.75rem 1rem;text-align:center">Gains/invité</th>
+            <th style="padding:.75rem 1rem;text-align:center">Gains totaux</th>
+            <th style="padding:.75rem 1rem;text-align:center">Mise à niveau</th>
+            <th style="padding:.75rem 1rem;text-align:center">Profits</th>
+          </tr>
+        </thead>
+        <tbody id="independant-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Liste filleuls -->
   <div class="ttable">
-    <div class="ttable-title">Mes filleuls</div>
+    <div class="ttable-title">👥 Mes filleuls</div>
     <div id="p-list"><div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.82rem">Aucun filleul pour le moment</div></div>
   </div>
 </div>
@@ -1331,7 +1396,7 @@ function buildAdmPages() {
     <div class="sc"><div class="sc-l">KYC en attente</div><div class="sc-v ye" id="as-kyc">—</div></div>
     <div class="sc"><div class="sc-l">Total déposé (validé)</div><div class="sc-v gr" id="as-tdep">—</div></div>
     <div class="sc"><div class="sc-l">Total retiré (validé)</div><div class="sc-v re" id="as-tret">—</div></div>
-    <div class="sc"><div class="sc-l">Parcelles actives</div><div class="sc-v bl" id="as-parc">—</div></div>
+    <div class="sc"><div class="sc-l">Profils activés</div><div class="sc-v bl" id="as-parc">—</div></div>
     <div class="sc"><div class="sc-l">Bonus distribués</div><div class="sc-v g" id="as-bon">—</div></div>
   </div>
   <div class="g2">
@@ -1383,7 +1448,7 @@ function buildAdmPages() {
 <!-- ADM PARCELLES -->
 <div class="pg" id="adm-parcs">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.3rem;flex-wrap:wrap;gap:.7rem">
-    <p style="color:var(--muted);font-size:.86rem">Créez, modifiez et supprimez les parcelles. Modifications immédiates sur le site.</p>
+    <p style="color:var(--muted);font-size:.86rem">Gérez les membres et les paramètres du réseau Indépendant.</p>
     <button class="btn btn-gold btn-sm" onclick="openParcModal()">➕ Nouvelle parcelle</button>
   </div>
   <div id="parc-list"></div>
@@ -1446,8 +1511,12 @@ function buildAdmPages() {
 async function initLeekPay() {
   if (!checkOnline()) { toast('Connexion requise pour payer.', 'error'); return; }
   await reloadUD();
-  const m = parseInt($('d-m').value);
-  if (!m || m < 1000) { toast('Montant minimum : 1 000 F', 'error'); return; }
+  // Vérifier si le profil est déjà activé
+  if (UD.profileActive) {
+    toast('Votre profil est déjà activé !', 'info');
+    return;
+  }
+  const m = ACTIVATION_MONTANT; // 2500F fixe
 
   const orderId  = 'IF_' + CU.uid.substring(0,8) + '_' + Date.now();
   const isFirst  = (UD.totalDepose || 0) === 0;
@@ -1522,9 +1591,11 @@ async function onLeekPaySuccess(txDocId, montant, isFirst, response) {
         const txRef  = db.collection('transactions').doc(txDocId);
         const ud     = uDoc.data();
 
+        // Activation profil : 2500F payés, 500F frais site, solde net = 0
+        // (l'activation ne crédite pas de solde, c'est un frais d'entrée)
         t.update(uRef, {
-          solde:       (ud.solde       || 0) + montant,
-          totalDepose: (ud.totalDepose || 0) + montant
+          profileActive: true,
+          totalDepose:   (ud.totalDepose || 0) + montant
         });
         t.update(txRef, {
           status:       'approved',
@@ -1533,23 +1604,36 @@ async function onLeekPaySuccess(txDocId, montant, isFirst, response) {
         });
       });
 
-      // Bonus parrainage si premier dépôt
+      // Bonus Indépendant si premier dépôt
       if (isFirst && UD.parrain) {
         await db.runTransaction(async t => {
           const pRef  = db.collection('users').doc(UD.parrain);
           const pDoc  = await t.get(pRef);
-          t.update(pRef, { bonus: (pDoc.data().bonus || 0) + PARRAINAGE_BONUS });
+          const pData = pDoc.data();
+          // Calculer le nombre de filleuls actuels du parrain
+          const filleulsSnap = await db.collection('users').where('parrain', '==', UD.parrain).get();
+          const nbFilleuls = filleulsSnap.size;
+          const bonusIndepCalc = calcBonusParrain(nbFilleuls);
+          t.update(pRef, {
+            bonus: (pData.bonus || 0) + bonusIndepCalc,
+            independantFilleuls: nbFilleuls
+          });
         });
+        // Récupérer le bonus calculé pour le log
+        const filleulsSnap2 = await db.collection('users').where('parrain', '==', UD.parrain).get();
+        const bonusFinal = calcBonusParrain(filleulsSnap2.size);
+        const lvlFinal   = getIndependantLevel(filleulsSnap2.size);
         await db.collection('transactions').add({
           userId:      UD.parrain,
           type:        'parrainage',
-          description: `Bonus parrainage — ${UD.nom}`,
-          montant:     PARRAINAGE_BONUS,
+          description: `Bonus Indépendant${lvlFinal ? ' (Niv.' + lvlFinal.num + ' ' + lvlFinal.nom + ')' : ''} — ${UD.nom}`,
+          montant:     bonusFinal,
           status:      'approved',
           createdAt:   firebase.firestore.FieldValue.serverTimestamp()
         });
-        await LOG('PARRAINAGE_BONUS', `Bonus 500F parrain`, {
-          parrain: UD.parrain, filleul: CU.uid, nom: UD.nom
+        await LOG('PARRAINAGE_BONUS', `Bonus Indépendant ${fmt(bonusFinal)} parrain`, {
+          parrain: UD.parrain, filleul: CU.uid, nom: UD.nom,
+          bonus: bonusFinal, niveau: lvlFinal?.nom || 'Aucun'
         });
       }
 
@@ -1560,7 +1644,7 @@ async function onLeekPaySuccess(txDocId, montant, isFirst, response) {
 
     await reloadUD();
     loadUDash();
-    toast(`Paiement de ${fmt(montant)} réussi ! Solde crédité 🎉`);
+    toast('Profil activé avec succès ! Bienvenue dans le réseau Indépendant 🎉');
     $('d-m').value = '';
   } catch(e) {
     toast('Paiement reçu mais erreur de crédit. Contactez le support.', 'error');
@@ -1617,13 +1701,20 @@ async function loadUDash() {
   await reloadUD();
   $('us-sol').textContent = fmt(UD.solde);
   $('us-bon').textContent = fmt(UD.bonus);
-  $('us-dep').textContent = fmt(UD.totalDepose);
+  const profilSt = $('us-dep');
+  if (profilSt) profilSt.textContent = UD.profileActive ? '✅ Activé' : '⏳ En attente';
+  const profilStSub = $('us-profil-st');
+  if (profilStSub) profilStSub.textContent = UD.profileActive ? 'Profil actif' : 'Profil inactif';
   const ref = UD.refCode || '------';
   $('u-rcode').textContent = ref;
   $('u-rlink').textContent = `${location.href.split('?')[0]}?ref=${ref}`;
 
   const fs = await db.collection('users').where('parrain', '==', CU.uid).get();
-  $('us-fil').textContent = fs.size;
+  const nbFil = fs.size;
+  $('us-fil').textContent = nbFil;
+  const lvlDash = getIndependantLevel(nbFil);
+  const lvlEl = $('us-lvl');
+  if (lvlEl) lvlEl.textContent = lvlDash ? `Niv.${lvlDash.num} – ${lvlDash.nom}` : 'Pas encore de niveau';
 
   const txs = await db.collection('transactions')
     .where('userId', '==', CU.uid)
@@ -1781,28 +1872,98 @@ async function confirmBuy() {
   }
 }
 
-// ── PARRAINAGE ────────────────────────────────────────────
+// ── PARRAINAGE / SYSTÈME INDÉPENDANT ───────────────────────
 async function loadPara() {
   await reloadUD();
   const ref = UD.refCode || '------';
   $('p-code').textContent = ref;
   $('p-link').textContent = `${location.href.split('?')[0]}?ref=${ref}`;
+
   const fs = await db.collection('users').where('parrain', '==', CU.uid).get();
-  $('p-tot').textContent = fs.size;
+  const nbFilleuls = fs.size;
+  $('p-tot').textContent = nbFilleuls;
+
   const gs = await db.collection('transactions')
     .where('userId', '==', CU.uid).where('type', '==', 'parrainage').get();
   let g = 0; gs.forEach(d => g += d.data().montant || 0);
   $('p-gai').textContent = fmt(g);
+
+  // Niveau actuel
+  const lvl     = getIndependantLevel(nbFilleuls);
+  const nextLvl = lvl ? INDEPENDANT_LEVELS.find(l => l.num === lvl.num + 1) : INDEPENDANT_LEVELS[0];
+
+  $('p-lvl').textContent = lvl ? `Niv.${lvl.num} – ${lvl.nom}` : 'Aucun';
+
+  // Box niveau actuel + progression
+  const box = $('p-niveau-box');
+  if (lvl) {
+    const toNext   = nextLvl ? nextLvl.invites - nbFilleuls : 0;
+    const pct      = nextLvl
+      ? Math.min(100, ((nbFilleuls - lvl.invites) / (nextLvl.invites - lvl.invites)) * 100)
+      : 100;
+    box.innerHTML = `
+      <div style="background:var(--dark2);border:1px solid ${lvl.couleur}44;border-radius:12px;padding:1.3rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <div style="width:52px;height:52px;border-radius:50%;background:${lvl.couleur}22;border:2px solid ${lvl.couleur};display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;font-size:1.15rem;color:${lvl.couleur};flex-shrink:0">${lvl.num}</div>
+        <div style="flex:1">
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.15rem">Niveau ${lvl.num} — <span style="color:${lvl.couleur}">${lvl.nom}</span></div>
+          <div style="font-size:.81rem;color:var(--muted);margin-bottom:.55rem">
+            ${nbFilleuls} filleul${nbFilleuls > 1 ? 's' : ''} |
+            Bonus actuel : <strong style="color:var(--green)">${fmt(lvl.gains_par_invite)}/invité</strong>
+            ${nextLvl ? `| Prochain niveau dans <strong style="color:var(--gold)">${toNext} filleul${toNext > 1 ? 's' : ''}</strong>` : `<span style="color:var(--gold)">— Niveau maximum atteint 👑</span>`}
+          </div>
+          <div class="prog"><div class="progf" style="width:${pct}%;background:${lvl.couleur}"></div></div>
+        </div>
+      </div>`;
+  } else {
+    box.innerHTML = `
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:1.2rem;text-align:center">
+        <div style="font-size:1.7rem;margin-bottom:.4rem">🚀</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1rem;margin-bottom:.3rem">Démarrez votre réseau Indépendant !</div>
+        <div style="font-size:.82rem;color:var(--muted)">Activez votre profil et invitez <strong style="color:var(--gold)">2 filleuls</strong> pour atteindre le Niveau 1 — Débutant et gagner <strong style="color:var(--green)">2 000 F/invité</strong></div>
+      </div>`;
+  }
+
+  // Tableau Niveaux Indépendant
+  const tbody = $('independant-tbody');
+  tbody.innerHTML = INDEPENDANT_LEVELS.map(l => {
+    const isActive = lvl && l.num === lvl.num;
+    const isDone   = lvl && l.num < lvl.num;
+    const row = `
+      <tr style="border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;${isActive ? `background:${l.couleur}12;` : ''}">
+        <td style="padding:.72rem 1rem">
+          <div style="display:flex;align-items:center;gap:.55rem">
+            <div style="width:26px;height:26px;border-radius:50%;background:${l.couleur}${isActive ? 'cc' : '33'};border:2px solid ${l.couleur};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:${isActive ? '#fff' : l.couleur};flex-shrink:0">${l.num}</div>
+            <div>
+              <div style="font-weight:${isActive ? '700' : '500'};color:${isActive ? l.couleur : 'var(--text)'};font-size:.83rem">${l.nom}</div>
+              ${isDone ? '<div style="font-size:.65rem;color:var(--green)">✓ Dépassé</div>' : ''}
+              ${isActive ? '<div style="font-size:.65rem;color:var(--gold)">◀ Niveau actuel</div>' : ''}
+            </div>
+          </div>
+        </td>
+        <td style="padding:.72rem 1rem;text-align:center;font-weight:600;color:var(--text)">${l.invites.toLocaleString('fr-FR')}</td>
+        <td style="padding:.72rem 1rem;text-align:center;color:var(--green);font-weight:600">${fmt(l.gains_par_invite)}</td>
+        <td style="padding:.72rem 1rem;text-align:center;color:#a78bfa;font-weight:600">${fmt(l.gains_totaux)}</td>
+        <td style="padding:.72rem 1rem;text-align:center;color:var(--gold);font-weight:600">${l.mise_a_niveau > 0 ? fmt(l.mise_a_niveau) : '—'}</td>
+        <td style="padding:.72rem 1rem;text-align:center;color:var(--green);font-weight:700">${fmt(l.profits)}</td>
+      </tr>`;
+    return row;
+  }).join('');
+
+  // Liste filleuls
   if (fs.empty) {
     $('p-list').innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:.82rem">Aucun filleul pour le moment</div>';
     return;
   }
-  $('p-list').innerHTML = fs.docs.map(d => {
+  $('p-list').innerHTML = `
+    <div class="thead" style="grid-template-columns:2fr 1fr 1fr 1fr">
+      <div>Filleul</div><div>Téléphone</div><div>Statut</div><div>Inscrit le</div>
+    </div>
+    ` + fs.docs.map(d => {
     const u = d.data();
     return `<div class="trow" style="grid-template-columns:2fr 1fr 1fr 1fr">
       <div><div style="font-weight:500">${u.nom}</div><div style="font-size:.75rem;color:var(--muted)">${u.email}</div></div>
       <div style="font-size:.82rem;color:var(--muted)">${u.phone}</div>
-      <div><span class="badge ${u.totalDepose > 0 ? 'bs' : 'bp'}">${u.totalDepose > 0 ? 'Actif' : 'Inscrit'}</span></div>
+      <div><span class="badge ${u.totalDepose > 0 ? 'bs' : 'bp'}">${u.totalDepose > 0 ? '✓ Actif' : 'Inscrit'}</span></div>
       <div style="font-size:.75rem;color:var(--muted)">${fmtD(u.createdAt)}</div>
     </div>`;
   }).join('');
@@ -1944,9 +2105,7 @@ async function loadAdmDash() {
   const allRt = await db.collection('retraits').where('status', '==', 'approved').get();
   allRt.forEach(d => tR += d.data().montant || 0);
   for (const u of us.docs) {
-    const p = await db.collection('users').doc(u.id)
-      .collection('parcelles').where('status', '==', 'active').get();
-    tP += p.size;
+    if (u.data().profileActive) tP++;
   }
   $('as-tdep').textContent = fmt(tD);
   $('as-tret').textContent = fmt(tR);
@@ -2013,9 +2172,7 @@ function renderUsers(users) {
           <div>
             <div style="font-weight:600;font-size:.87rem">
               ${u.nom || '?'}
-              ${ADMIN_EMAILS.includes(u.email)
-                ? '<span class="badge bi" style="font-size:.65rem;margin-left:.4rem">Admin</span>'
-                : ''}
+              ${u.isAdmin ? '<span class="badge bi" style="font-size:.65rem;margin-left:.4rem">Admin</span>' : ''}
             </div>
             <div style="font-size:.75rem;color:var(--muted)">${u.email || ''} | ${u.phone || ''}</div>
           </div>
@@ -2257,22 +2414,26 @@ async function execAction(approve) {
           approvedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }));
-      // Bonus parrainage si premier dépôt manuel
+      // Bonus Indépendant si premier dépôt/activation manuel(le)
       if (t.isFirstDeposit && t.parrain) {
+        const fSnap = await db.collection('users').where('parrain', '==', t.parrain).get();
+        const nb    = fSnap.size;
+        const bI    = calcBonusParrain(nb);
+        const lvI   = getIndependantLevel(nb);
         await fbGuard(() => db.runTransaction(async tr => {
-          const pRef  = db.collection('users').doc(t.parrain);
-          const pDoc  = await tr.get(pRef);
-          tr.update(pRef, { bonus: (pDoc.data().bonus || 0) + PARRAINAGE_BONUS });
+          const pRef = db.collection('users').doc(t.parrain);
+          const pDoc = await tr.get(pRef);
+          tr.update(pRef, { bonus: (pDoc.data().bonus || 0) + bI });
         }));
         await db.collection('transactions').add({
           userId:      t.parrain,
           type:        'parrainage',
-          description: `Bonus parrainage — ${t.userNom}`,
-          montant:     PARRAINAGE_BONUS,
+          description: 'Bonus Indépendant' + (lvI ? ' (Niv.' + lvI.num + ' ' + lvI.nom + ')' : '') + ' — ' + t.userNom,
+          montant:     bI,
           status:      'approved',
           createdAt:   firebase.firestore.FieldValue.serverTimestamp()
         });
-        await LOG('PARRAINAGE_BONUS', `Bonus 500F parrain`, {
+        await LOG('PARRAINAGE_BONUS', 'Bonus Indépendant ' + fmt(bI) + ' parrain', {
           parrain: t.parrain, filleul: t.userId, nom: t.userNom
         });
       }
@@ -2392,7 +2553,7 @@ async function execAction(approve) {
         return;
       }
       appr.push(CU.uid);
-      const nst = appr.length >= 2 ? 'approved' : 'pending';
+      const nst = 'approved'; // 1 seul admin, approbation immédiate
       await fbGuard(() => db.collection('admin_retraits').doc(id).update({
         approvals: appr,
         status:    nst,
@@ -2401,9 +2562,7 @@ async function execAction(approve) {
       await LOG('ADMIN_RETRAIT_APPROVE',
         `Retrait admin ${nst === 'approved' ? 'validé (2/2)' : 'approuvé (1/2)'}`,
         { id, m: ar.montant, appr });
-      toast(nst === 'approved'
-        ? 'Retrait admin validé (2/2) ✓'
-        : 'Approbation enregistrée (1/2)');
+      toast('Retrait admin approuvé ✓');
     } else {
       await fbGuard(() => db.collection('admin_retraits').doc(id).update({
         status:     'rejected',
@@ -2602,17 +2761,13 @@ async function loadAdmAret() {
       <div style="font-size:.82rem">${ar.motif || '—'}</div>
       <div>
         <span class="badge ${sC[ar.status] || 'bp'}">${sL[ar.status] || ar.status}</span><br>
-        <span style="font-size:.71rem;color:var(--muted)">${appr.length}/2 approbations</span>
+        
       </div>
       <div style="display:flex;gap:.38rem;flex-wrap:wrap">
-        ${ar.status === 'pending' && !isMine && !hasApp
-          ? `<button class="btn btn-success btn-sm" onclick="hdlAret('${id}',true)">✓</button>
-             <button class="btn btn-danger btn-sm"  onclick="hdlAret('${id}',false)">✕</button>`
-          : ar.status === 'pending' && isMine
-            ? '<span style="font-size:.75rem;color:var(--muted)">Attente autres admins</span>'
-            : ar.status === 'pending' && hasApp
-              ? '<span style="font-size:.75rem;color:var(--green)">✓ Approuvé par vous</span>'
-              : '<span style="font-size:.75rem;color:var(--muted)">Traité</span>'}
+        ${ar.status === 'pending'
+          ? `<button class="btn btn-success btn-sm" onclick="hdlAret('${id}',true)">✓ Approuver</button>
+             <button class="btn btn-danger btn-sm"  onclick="hdlAret('${id}',false)">✕ Rejeter</button>`
+          : '<span style="font-size:.75rem;color:var(--muted)">Traité</span>'}
       </div>
     </div>`;
   }).join('');
@@ -2771,8 +2926,8 @@ function renderLogs(logs) {
 // ║        allow write: if request.auth != null              ║
 // ║          && request.auth.token.email in [               ║
 // ║            'adminindependancefinancier@gmail.com',       ║
-// ║            'adminindependancefinancier2@gmail.com',      ║
-// ║            'adminindependancefinancier3@gmail.com'       ║
+// ║                  ║
+// ║                   ║
 // ║          ];                                              ║
 // ║      }                                                   ║
 // ║      // Utilisateurs : lecture/écriture par soi-même     ║
@@ -2780,15 +2935,15 @@ function renderLogs(logs) {
 // ║        allow read, write: if request.auth.uid == uid     ║
 // ║          || request.auth.token.email in [                ║
 // ║            'adminindependancefinancier@gmail.com',       ║
-// ║            'adminindependancefinancier2@gmail.com',      ║
-// ║            'adminindependancefinancier3@gmail.com'       ║
+// ║                  ║
+// ║                   ║
 // ║          ];                                              ║
 // ║        match /parcelles/{pid} {                          ║
 // ║          allow read, write: if request.auth.uid == uid   ║
 // ║            || request.auth.token.email in [              ║
 // ║              'adminindependancefinancier@gmail.com',     ║
-// ║              'adminindependancefinancier2@gmail.com',    ║
-// ║              'adminindependancefinancier3@gmail.com'     ║
+// ║                  ║
+// ║                   ║
 // ║            ];                                            ║
 // ║        }                                                 ║
 // ║      }                                                   ║
