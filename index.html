@@ -622,48 +622,68 @@ h1 .acc{color:var(--gold)}
 
 <div id="toast"></div>
 
-<!-- ══ FIREBASE COMPAT SDK — chargement séquentiel garanti ══ -->
+<!-- ══ FIREBASE COMPAT SDK ══ -->
 <script>
-// Chargement dynamique séquentiel des SDK Firebase
 (function() {
-  const FIREBASE_SDKS = [
+  // Utiliser les CDN jsDelivr comme fallback si gstatic échoue
+  var PRIMARY = [
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js",
     "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"
   ];
+  var FALLBACK = [
+    "https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js",
+    "https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.min.js",
+    "https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-firestore-compat.min.js",
+    "https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-analytics-compat.min.js"
+  ];
 
-  function loadScript(url, cb) {
-    const s = document.createElement('script');
+  function showErr(msg) {
+    var fl = document.getElementById('fb-loading');
+    if (!fl) return;
+    fl.innerHTML =
+      '<div style="text-align:center;padding:2.5rem 1rem">' +
+      '<div style="font-size:2.5rem;margin-bottom:.8rem">🌐</div>' +
+      '<h2 style="font-family:sans-serif;color:#E74C3C;margin-bottom:.5rem">' + msg + '</h2>' +
+      '<p style="color:#888;font-size:.88rem;margin:0 auto 1.2rem;max-width:320px">Vérifiez votre connexion internet<br>et réessayez.</p>' +
+      '<button onclick="location.reload()" style="padding:.75rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:8px;font-weight:700;cursor:pointer">🔄 Réessayer</button>' +
+      '</div>';
+  }
+
+  function loadScript(url, onOk, onFail) {
+    var s = document.createElement('script');
     s.src = url;
-    s.onload  = cb;
-    s.onerror = function() {
-      document.getElementById('fb-loading').innerHTML =
-        '<div style="text-align:center;padding:2rem">' +
-        '<div style="font-size:2.5rem">🌐</div>' +
-        '<h2 style="color:#E74C3C;font-family:serif;margin:.8rem 0">Erreur réseau</h2>' +
-        '<p style="color:#8A8580;font-size:.9rem">Impossible de charger Firebase.<br>Vérifiez votre connexion internet.</p>' +
-        '<button onclick="location.reload()" style="margin-top:1rem;padding:.8rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:7px;font-weight:700;cursor:pointer">🔄 Réessayer</button>' +
-        '</div>';
-    };
+    s.onload  = onOk;
+    s.onerror = onFail;
     document.head.appendChild(s);
   }
 
-  function loadSequential(list, idx, done) {
-    if (idx >= list.length) { done(); return; }
-    loadScript(list[idx], function() { loadSequential(list, idx + 1, done); });
+  function loadList(list, idx, onAllDone, onError) {
+    if (idx >= list.length) { onAllDone(); return; }
+    loadScript(list[idx],
+      function() { loadList(list, idx + 1, onAllDone, onError); },
+      onError
+    );
   }
 
-  window._firebaseReady = false;
-  loadSequential(FIREBASE_SDKS, 0, function() {
-    window._firebaseReady = true;
-    // Initialiser Firebase maintenant que les SDK sont disponibles
-    try {
-      window._doFirebaseInit();
-    } catch(err) {
-      console.error('Init Firebase échouée:', err);
+  // Charger depuis gstatic, fallback vers jsDelivr si ça échoue
+  loadList(PRIMARY, 0,
+    function() {
+      // Succès principal
+      if (typeof window._doFirebaseInit === 'function') window._doFirebaseInit();
+    },
+    function() {
+      console.warn('CDN principal échoué, tentative CDN de secours…');
+      loadList(FALLBACK, 0,
+        function() {
+          if (typeof window._doFirebaseInit === 'function') window._doFirebaseInit();
+          else showErr('Erreur d'initialisation');
+        },
+        function() { showErr('Connexion impossible'); }
+      );
     }
-  });
+  );
 })();
 </script>
 
@@ -737,6 +757,7 @@ function calcBonusParrain(nbFilleuls) {
 // ── INIT FIREBASE — appelé après chargement des SDK ─────
 let app, db, auth, analytics;
 
+// Exposer globalement pour le loader
 window._doFirebaseInit = function() {
   if (app) return; // déjà initialisé
   try {
@@ -869,8 +890,8 @@ async function LOG(type, desc, data={}) {
 // ── HELPERS FORM ──────────────────────────────────────────
 function clrE(id) { $(id).textContent = ''; $(id).classList.remove('show'); }
 function showE(id, m) { $(id).textContent = m; $(id).classList.add('show'); }
-</script>
-<script>
+
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║                    🔐 AUTHENTIFICATION                  ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -985,7 +1006,22 @@ async function doLogout() {
 
 // ── AUTH STATE OBSERVER ───────────────────────────────────
 function _startAuthObserver() {
+  // Timeout de sécurité : si auth ne répond pas en 15s → erreur
+  const authTimeout = setTimeout(() => {
+    const fl = document.getElementById('fb-loading');
+    if (fl && !fl.classList.contains('hide')) {
+      fl.innerHTML =
+        '<div style="text-align:center;padding:2.5rem 1rem">' +
+        '<div style="font-size:2.5rem;margin-bottom:.8rem">🔥</div>' +
+        '<h2 style="font-family:'Playfair Display',serif;color:#E74C3C;margin-bottom:.5rem">Connexion lente</h2>' +
+        '<p style="color:#8A8580;font-size:.88rem;max-width:340px;margin:0 auto 1.2rem">Firebase met trop de temps à répondre.<br>Vérifiez votre connexion internet.</p>' +
+        '<button onclick="location.reload()" style="padding:.75rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.92rem">🔄 Réessayer</button>' +
+        '</div>';
+    }
+  }, 15000);
+
 auth.onAuthStateChanged(async user => {
+  clearTimeout(authTimeout); // Auth a répondu → annuler le timeout
   const loading = $('fb-loading');
 
   if (!user) {
@@ -1080,8 +1116,8 @@ async function showApp() {
     showPg('u-dash');
   }
 }
-</script>
-<script>
+
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║          🌿 PARCELLES — Lecture depuis Firestore        ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -1223,8 +1259,8 @@ async function reloadUD() {
     if (s.exists) UD = s.data();
   });
 }
-</script>
-<script>
+
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║            🏗️ CONSTRUCTION DES PAGES UTILISATEUR        ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -1558,8 +1594,8 @@ function buildAdmPages() {
   </div>
 </div>`;
 }
-</script>
-<script>
+
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║               💳 LEEKPAY — DÉPÔT SÉCURISÉ              ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -1809,8 +1845,8 @@ function copyRef() {
     .then(() => toast('Lien copié !'))
     .catch(() => toast('Erreur de copie', 'error'));
 }
-</script>
-<script>
+
+
 // ── MES PARCELLES ─────────────────────────────────────────
 async function loadMParc() {
   const ps = await fbGuard(() =>
@@ -2134,8 +2170,8 @@ async function saveProfil() {
   }
   toast('Profil mis à jour !');
 }
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║                 👑 ADMIN — DASHBOARD                    ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -2287,8 +2323,8 @@ async function setUS(uid, status) {
   toast(`Utilisateur ${status === 'active' ? 'activé' : 'suspendu'}`);
   loadAdmUsers();
 }
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║               👑 ADMIN — DÉPÔTS EN ATTENTE              ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -2441,8 +2477,8 @@ async function hdlKYC(id, approve) {
   $('am-ko').style.display = !approve ? 'flex' : 'none';
   openM('mAction');
 }
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║         👑 ADMIN — EXÉCUTION DES ACTIONS (modal)        ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -2635,8 +2671,8 @@ async function execAction(approve) {
   PENDING = null;
   $('am-r').value = '';
 }
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║            👑 ADMIN — PARCELLES CRUD                    ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -2871,8 +2907,8 @@ async function loadAdmAllParc() {
         </div>`).join('')
     : '<div style="padding:1.8rem;text-align:center;color:var(--muted);font-size:.82rem">Aucune parcelle enregistrée</div>';
 }
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║              👑 ADMIN — JOURNAL D'ACTIVITÉ              ║
 // ╚══════════════════════════════════════════════════════════╝
@@ -3010,8 +3046,8 @@ function renderLogs(logs) {
 // ║    }                                                     ║
 // ║  }                                                       ║
 // ╚══════════════════════════════════════════════════════════╝
-  </script>
-  <script>
+  
+
 // ╔══════════════════════════════════════════════════════════╗
 // ║     🌿 INITIALISATION DES PARCELLES PAR DÉFAUT          ║
 // ║  (Exécuté une seule fois si la collection est vide)      ║
@@ -3085,6 +3121,7 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 console.log('✅ Code principal chargé');
+
 </script>
 
 <!-- ══ BOUTON WHATSAPP + MAIL FLOTTANTS ══════════════════════ -->
