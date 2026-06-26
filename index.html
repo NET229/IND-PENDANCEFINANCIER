@@ -438,7 +438,7 @@ h1 .acc{color:var(--gold)}
     <div style="font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--gold);margin-bottom:.5rem">
       INDÉPENDANCE FINANCIER
     </div>
-    <p>© 2026n Indépendance Financier. Tous droits réservés. Investissez de manière responsable.</p>
+    <p>© 2025 Indépendance Financier. Tous droits réservés. Investissez de manière responsable.</p>
   </div>
 </div>
 <!-- ══ AUTH MODAL ════════════════════════════════════════════ -->
@@ -621,12 +621,54 @@ h1 .acc{color:var(--gold)}
 </div>
 
 <div id="toast"></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+
+<!-- ══ FIREBASE COMPAT SDK — chargement séquentiel garanti ══ -->
+<script>
+// Chargement dynamique séquentiel des SDK Firebase
+(function() {
+  const FIREBASE_SDKS = [
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js",
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js",
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"
+  ];
+
+  function loadScript(url, cb) {
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload  = cb;
+    s.onerror = function() {
+      document.getElementById('fb-loading').innerHTML =
+        '<div style="text-align:center;padding:2rem">' +
+        '<div style="font-size:2.5rem">🌐</div>' +
+        '<h2 style="color:#E74C3C;font-family:serif;margin:.8rem 0">Erreur réseau</h2>' +
+        '<p style="color:#8A8580;font-size:.9rem">Impossible de charger Firebase.<br>Vérifiez votre connexion internet.</p>' +
+        '<button onclick="location.reload()" style="margin-top:1rem;padding:.8rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:7px;font-weight:700;cursor:pointer">🔄 Réessayer</button>' +
+        '</div>';
+    };
+    document.head.appendChild(s);
+  }
+
+  function loadSequential(list, idx, done) {
+    if (idx >= list.length) { done(); return; }
+    loadScript(list[idx], function() { loadSequential(list, idx + 1, done); });
+  }
+
+  window._firebaseReady = false;
+  loadSequential(FIREBASE_SDKS, 0, function() {
+    window._firebaseReady = true;
+    // Initialiser Firebase maintenant que les SDK sont disponibles
+    try {
+      window._doFirebaseInit();
+    } catch(err) {
+      console.error('Init Firebase échouée:', err);
+    }
+  });
+})();
+</script>
 
 <script>
+// Tout le code principal attend que Firebase soit prêt
 // ╔══════════════════════════════════════════════════════════╗
 // ║         🔥 FIREBASE — CONFIGURATION OFFICIELLE          ║
 // ║      Firebase est OBLIGATOIRE pour toute opération      ║
@@ -692,23 +734,35 @@ function calcBonusParrain(nbFilleuls) {
   return lvl ? lvl.gains_par_invite : MONTANT_NET_PARRAIN;
 }
 
-// ── INIT FIREBASE (obligatoire) ───────────────────────────
+// ── INIT FIREBASE — appelé après chargement des SDK ─────
 let app, db, auth, analytics;
-try {
-  app       = firebase.initializeApp(FB_CFG);
-  db        = firebase.firestore();
-  auth      = firebase.auth();
-  analytics = firebase.analytics();
-  // Activer la persistance hors-ligne partielle (cache local)
-  db.enablePersistence({ synchronizeTabs: true }).catch(e => {
-    if (e.code === 'failed-precondition') console.warn('Persistance: plusieurs onglets ouverts');
-    else if (e.code === 'unimplemented')  console.warn('Persistance non supportée');
-  });
-} catch(e) {
-  console.error('Erreur init Firebase:', e);
-  document.getElementById('offline-wall').style.display = 'flex';
-  document.getElementById('fb-loading').style.display   = 'none';
-}
+
+window._doFirebaseInit = function() {
+  if (app) return; // déjà initialisé
+  try {
+    if (typeof firebase === 'undefined') throw new Error('SDK Firebase non chargé');
+    app  = firebase.initializeApp(FB_CFG);
+    db   = firebase.firestore();
+    auth = firebase.auth();
+    try { analytics = firebase.analytics(); } catch(e2) { /* analytics optionnel */ }
+    db.enablePersistence({ synchronizeTabs: true }).catch(e => {
+      if (e.code === 'failed-precondition') console.warn('Persistance: plusieurs onglets');
+      else if (e.code === 'unimplemented')  console.warn('Persistance non supportée');
+    });
+    console.log('🔥 Firebase initialisé');
+    _startAuthObserver();
+  } catch(e) {
+    console.error('Erreur init Firebase:', e);
+    const fl = document.getElementById('fb-loading');
+    if (fl) fl.innerHTML =
+      '<div style="text-align:center;padding:2.5rem 1rem">' +
+      '<div style="font-size:3rem;margin-bottom:.8rem">🔥</div>' +
+      '<h2 style="font-family:'Playfair Display',serif;color:#E74C3C;margin-bottom:.6rem">Firebase non initialisé</h2>' +
+      '<p style="color:#8A8580;font-size:.88rem;max-width:340px;margin:0 auto 1.2rem">La connexion à Firebase a échoué.<br>Vérifiez votre connexion internet.</p>' +
+      '<button onclick="location.reload()" style="padding:.8rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.95rem">🔄 Réessayer</button>' +
+      '</div>';
+  }
+};
 
 // ── VÉRIFICATION CONNEXION OBLIGATOIRE ────────────────────
 function checkOnline() {
@@ -930,6 +984,7 @@ async function doLogout() {
 }
 
 // ── AUTH STATE OBSERVER ───────────────────────────────────
+function _startAuthObserver() {
 auth.onAuthStateChanged(async user => {
   const loading = $('fb-loading');
 
@@ -996,6 +1051,7 @@ auth.onAuthStateChanged(async user => {
     if (loading) loading.classList.add('hide');
   }
 });
+} // fin _startAuthObserver
 
 // ── AFFICHER LANDING ──────────────────────────────────────
 function showLanding() {
@@ -3028,16 +3084,7 @@ window.addEventListener('unhandledrejection', e => {
   }
 });
 
-// Empêcher l'accès à l'app sans Firebase initialisé
-if (!db || !auth) {
-  document.body.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0A0A0A;flex-direction:column;gap:1rem;text-align:center;padding:2rem">
-      <div style="font-size:3rem">🔥</div>
-      <h2 style="font-family:'Playfair Display',serif;color:#E74C3C">Firebase non initialisé</h2>
-      <p style="color:#8A8580;max-width:400px">La connexion à Firebase est obligatoire. Vérifiez la configuration et votre connexion internet.</p>
-      <button onclick="location.reload()" style="padding:.8rem 2rem;background:#C9A84C;color:#0A0A0A;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:.95rem">🔄 Réessayer</button>
-    </div>`;
-}
+console.log('✅ Code principal chargé');
 </script>
 
 <!-- ══ BOUTON WHATSAPP + MAIL FLOTTANTS ══════════════════════ -->
@@ -3047,7 +3094,7 @@ if (!db || !auth) {
   z-index:9000;
 ">
   <!-- WhatsApp -->
-  <a href="https://wa.me/2290197000000"
+  <a href="https://wa.me/2290145838912"
      target="_blank" rel="noopener noreferrer"
      title="Contactez-nous sur WhatsApp"
      style="
